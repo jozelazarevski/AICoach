@@ -28,8 +28,10 @@ AICoach/
     │   ├── page.tsx                 # Landing page
     │   ├── globals.css              # Global styles (Tailwind + CSS vars)
     │   ├── api/
-    │   │   └── chat/
-    │   │       └── route.ts         # Claude API chat endpoint
+    │   │   ├── chat/
+    │   │   │   └── route.ts         # Claude API chat endpoint
+    │   │   └── sentences/
+    │   │       └── route.ts         # Sentences DB API endpoint
     │   ├── coach/
     │   │   └── page.tsx             # AI chat coach interface
     │   ├── dashboard/
@@ -41,8 +43,18 @@ AICoach/
     ├── components/
     │   ├── nav.tsx                  # Top navigation bar
     │   └── lesson-accordion.tsx     # Expandable lesson component
+    ├── lib/
+    │   └── db.ts                    # SQLite database connection helper
     └── data/
         └── modules.ts              # Training module content and types
+```
+
+Additional directories (generated, git-ignored):
+```
+scripts/
+└── seed-sentences.ts                # Offline sentence generator (no AI dependency)
+data/
+└── sentences.db                     # SQLite DB with 1100+ example sentences (generated)
 ```
 
 ## Tech Stack
@@ -50,7 +62,8 @@ AICoach/
 - **Language**: TypeScript
 - **Framework**: Next.js 15 (App Router)
 - **UI**: React 19, Tailwind CSS v4
-- **AI**: Anthropic Claude API (`@anthropic-ai/sdk`)
+- **AI**: Anthropic Claude API (`@anthropic-ai/sdk`) — used only for chat coach
+- **Database**: SQLite via `better-sqlite3` — stores generated example sentences
 - **Styling**: CSS custom properties + Tailwind, dark mode via `prefers-color-scheme`
 - **State**: React `useState` + `localStorage` for progress tracking
 - **Deployment**: Vercel-ready (standard Next.js)
@@ -65,7 +78,10 @@ npm install
 cp .env.example .env
 # Edit .env and add your ANTHROPIC_API_KEY
 
-# 3. Run development server
+# 3. Generate the sentences database
+npm run seed
+
+# 4. Run development server
 npm run dev
 ```
 
@@ -76,6 +92,7 @@ npm run dev      # Start dev server (http://localhost:3000)
 npm run build    # Production build
 npm run start    # Start production server
 npm run lint     # Run ESLint
+npm run seed     # Generate sentences DB (run once before first use)
 ```
 
 ## Architecture
@@ -89,6 +106,7 @@ npm run lint     # Run ESLint
 
 ### API Routes
 - **`POST /api/chat`** — Proxies messages to the Anthropic Claude API with a career coaching system prompt. Expects `{ messages: Array<{ role, content }> }`, returns `{ role, content }`.
+- **`GET /api/sentences`** — Serves example sentences from the SQLite database. Supports query params: `category`, `subcategory`, `type`, `search`, `random` (true/false), `limit` (max 100), `offset`.
 
 ### Data Model
 - Training content lives in `src/data/modules.ts` as a typed array of `Module` objects
