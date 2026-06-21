@@ -6,10 +6,12 @@ node_modules/
 
 # Build output
 dist/
+dist-ssr/
 
 # Environment
 .env
 .env.local
+*.local
 
 # Editor
 .DS_Store
