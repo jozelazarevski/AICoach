@@ -15,6 +15,21 @@ import { offerCounter } from "./encounters/offer-counter";
 import { governanceCharter } from "./encounters/governance-charter";
 import { hardFeedback } from "./encounters/hard-feedback";
 import { sayingNo } from "./encounters/saying-no";
+import { ambushMeeting } from "./encounters/ambush-meeting";
+import { passiveVeto } from "./encounters/passive-veto";
+import { stretchAssignment } from "./encounters/stretch-assignment";
+import { meaCulpa } from "./encounters/mea-culpa";
+import { creditMeeting } from "./encounters/credit-meeting";
+import { rivalExit } from "./encounters/rival-exit";
+import { referenceTrap } from "./encounters/reference-trap";
+import { scopeCreep } from "./encounters/scope-creep";
+import { matrixConflict } from "./encounters/matrix-conflict";
+import { lateFeedback } from "./encounters/late-feedback";
+import { juniorEndRun } from "./encounters/junior-end-run";
+import { deckRewrite } from "./encounters/deck-rewrite";
+import { handshakeDeal } from "./encounters/handshake-deal";
+import { promotionLeak } from "./encounters/promotion-leak";
+import { allyTurned } from "./encounters/ally-turned";
 
 export const ENCOUNTERS = [
   managerStall,
@@ -34,4 +49,19 @@ export const ENCOUNTERS = [
   governanceCharter,
   hardFeedback,
   sayingNo,
+  ambushMeeting,
+  passiveVeto,
+  stretchAssignment,
+  meaCulpa,
+  creditMeeting,
+  rivalExit,
+  referenceTrap,
+  scopeCreep,
+  matrixConflict,
+  lateFeedback,
+  juniorEndRun,
+  deckRewrite,
+  handshakeDeal,
+  promotionLeak,
+  allyTurned,
 ];
