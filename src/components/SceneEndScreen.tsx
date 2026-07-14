@@ -44,6 +44,7 @@ function DebriefTab({
   return (
     <div className="flex flex-col gap-6">
       {stageChoices.map((sc, si) => {
+        const isFreeform = sc.choiceId === "freeform";
         const bestPoints = Math.max(...sc.allChoices.map((c) => c.points));
         return (
           <div key={sc.stageId}>
@@ -55,9 +56,30 @@ function DebriefTab({
                 {sc.stagePrompt}
               </p>
             </div>
+            {isFreeform && sc.freeformText && (
+              <div
+                className="mb-2 rounded-lg border px-3 py-2"
+                style={{
+                  borderColor: "var(--accent)",
+                  background: "color-mix(in srgb, var(--accent) 8%, var(--ink-2))",
+                }}
+              >
+                <div className="mb-1 font-mono text-[10px] uppercase tracking-wide" style={{ color: "var(--accent)" }}>
+                  Your response · {sc.choiceTag}
+                </div>
+                <p className="font-body text-xs leading-relaxed text-paper-dim">
+                  {sc.freeformText}
+                </p>
+                {sc.choicePoints !== 0 && (
+                  <p className="mt-1 font-mono text-xs" style={{ color: sc.choicePoints > 0 ? "#6FA56B" : "#C2584A" }}>
+                    {sc.choicePoints > 0 ? `+${sc.choicePoints}` : sc.choicePoints} pts
+                  </p>
+                )}
+              </div>
+            )}
             <div className="flex flex-col gap-2">
               {sc.allChoices.map((choice) => {
-                const isYours = choice.id === sc.choiceId;
+                const isYours = !isFreeform && choice.id === sc.choiceId;
                 const isBest = choice.points === bestPoints;
                 const isExpanded = expanded === `${sc.stageId}-${choice.id}`;
 
@@ -136,7 +158,7 @@ export function SceneEndScreen({
   sceneScore,
   xpGained,
   dailyBonus,
-  encounter: _encounter,
+  encounter,
   stageChoices,
   onPlayAgain,
   onPickNew,
@@ -146,6 +168,11 @@ export function SceneEndScreen({
   return (
     <div className="mx-auto flex w-full max-w-2xl flex-col gap-6 px-4 py-10">
       <div className="flex flex-col items-center gap-2 text-center">
+        {encounter && (
+          <p className="font-mono text-[10px] uppercase tracking-widest text-paper-faint">
+            {encounter.opponent.name} · {encounter.opponent.archetype}
+          </p>
+        )}
         <span
           className="font-mono text-xs uppercase tracking-widest"
           style={{ color: OUTCOME_COLOR[ending.result] }}
@@ -159,8 +186,12 @@ export function SceneEndScreen({
           {grade}
         </div>
         <div className="mt-2 flex gap-6 font-mono text-sm text-paper-dim">
-          <span>Scene score {sceneScore}</span>
-          <span>+{xpGained} XP</span>
+          <span>Score {sceneScore}</span>
+          {xpGained > 0 ? (
+            <span>+{xpGained} XP</span>
+          ) : (
+            <span className="text-paper-faint">No XP</span>
+          )}
           {dailyBonus && (
             <span style={{ color: "#C98A3A" }}>+10 daily</span>
           )}

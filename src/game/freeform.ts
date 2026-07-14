@@ -51,7 +51,7 @@ function scoreChoice(tokens: string[], rawInput: string, choice: Choice): number
   return score;
 }
 
-const THRESHOLD = 1;
+const THRESHOLD = 2;
 
 export function resolveFreeform(
   input: string,

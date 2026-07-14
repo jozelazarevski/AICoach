@@ -25,6 +25,7 @@ export interface StageChoice {
   choiceLine: string;
   choicePrinciple: string;
   allChoices: Choice[];
+  freeformText?: string; // set when the player typed a freeform response
 }
 
 export interface GameState {
@@ -148,6 +149,7 @@ export function applyChoice(
       choiceLine: choice.line,
       choicePrinciple: choice.principle,
       allChoices: currentStage.choices,
+      freeformText: choice.id === "freeform" ? choice.line : undefined,
     });
   }
 
@@ -212,7 +214,7 @@ export function checkEnding(
   if (state.momentum >= 100) {
     const wins = encounter.endings.filter((e) => e.result === "won");
     const best =
-      wins.sort(
+      [...wins].sort(
         (a, b) =>
           (b.when.momentumAtLeast ?? 0) - (a.when.momentumAtLeast ?? 0)
       )[0] ?? encounter.endings[encounter.endings.length - 1];

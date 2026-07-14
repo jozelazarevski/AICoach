@@ -32,7 +32,8 @@ interface EndInfo {
 }
 
 function dailyEncounterId(encounters: Encounter[]): string {
-  const today = new Date().toISOString().split("T")[0];
+  const _d = new Date();
+  const today = `${_d.getFullYear()}-${String(_d.getMonth() + 1).padStart(2, "0")}-${String(_d.getDate()).padStart(2, "0")}`;
   let hash = 5381;
   for (let i = 0; i < today.length; i++) {
     hash = ((hash << 5) + hash) + today.charCodeAt(i);
