@@ -30,6 +30,11 @@ import { deckRewrite } from "./encounters/deck-rewrite";
 import { handshakeDeal } from "./encounters/handshake-deal";
 import { promotionLeak } from "./encounters/promotion-leak";
 import { allyTurned } from "./encounters/ally-turned";
+import { investorProbe } from "./encounters/investor-probe";
+import { journalistCall } from "./encounters/journalist-call";
+import { boardPressure } from "./encounters/board-pressure";
+import { clientUltimatum } from "./encounters/client-ultimatum";
+import { regulatorAudit } from "./encounters/regulator-audit";
 
 export const ENCOUNTERS = [
   managerStall,
@@ -64,4 +69,9 @@ export const ENCOUNTERS = [
   handshakeDeal,
   promotionLeak,
   allyTurned,
+  investorProbe,
+  journalistCall,
+  boardPressure,
+  clientUltimatum,
+  regulatorAudit,
 ];

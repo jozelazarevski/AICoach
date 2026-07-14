@@ -23,6 +23,7 @@ export interface ConditionalPrompt {
 export interface Stage {
   id: string;
   prompt: string | ConditionalPrompt;
+  prompts?: string[]; // variant prompts for replay — picked by state.promptVariant
   choices: Choice[];
   freeformFallback?: {
     points: number;

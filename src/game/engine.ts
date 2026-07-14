@@ -16,6 +16,17 @@ export interface LogEntry {
   color?: string;
 }
 
+export interface StageChoice {
+  stageId: string;
+  stagePrompt: string;
+  choiceId: string;
+  choiceTag: string;
+  choicePoints: number;
+  choiceLine: string;
+  choicePrinciple: string;
+  allChoices: Choice[];
+}
+
 export interface GameState {
   encounterId: string;
   stageIndex: number;
@@ -26,29 +37,57 @@ export interface GameState {
   flags: Record<string, boolean>;
   log: LogEntry[];
   status: "playing" | "won" | "partial" | "lost";
+  prevChoiceTags: string[];
+  stageChoices: StageChoice[];
+  promptVariant: number;
 }
 
 function clamp(value: number, min: number, max: number): number {
   return Math.max(min, Math.min(max, value));
 }
 
+function interpolate(text: string, state: GameState): string {
+  if (!text.includes("{prev}")) return text;
+  const lastTag = state.prevChoiceTags[state.prevChoiceTags.length - 1] ?? "";
+  return text.replace(/\{prev\}/g, lastTag);
+}
+
 export function resolvePrompt(stage: Stage, state: GameState): string {
+  // Variant prompts for replay variance.
+  if (stage.prompts && stage.prompts.length > 0) {
+    const idx = state.promptVariant % stage.prompts.length;
+    return interpolate(stage.prompts[idx], state);
+  }
+
   const prompt = stage.prompt;
-  if (typeof prompt === "string") return prompt;
-  if (prompt.ifFlag) {
-    const [flag, text] = prompt.ifFlag;
-    if (state.flags[flag]) return text;
+  let resolved: string;
+  if (typeof prompt === "string") {
+    resolved = prompt;
+  } else {
+    if (prompt.ifFlag) {
+      const [flag, text] = prompt.ifFlag;
+      if (state.flags[flag]) {
+        resolved = text;
+      } else if (prompt.ifStandingBelow) {
+        const [threshold, text2] = prompt.ifStandingBelow;
+        resolved = state.standing < threshold ? text2 : prompt.default;
+      } else {
+        resolved = prompt.default;
+      }
+    } else if (prompt.ifStandingBelow) {
+      const [threshold, text] = prompt.ifStandingBelow;
+      resolved = state.standing < threshold ? text : prompt.default;
+    } else {
+      resolved = prompt.default;
+    }
   }
-  if (prompt.ifStandingBelow) {
-    const [threshold, text] = prompt.ifStandingBelow;
-    if (state.standing < threshold) return text;
-  }
-  return prompt.default;
+  return interpolate(resolved, state);
 }
 
 export function startEncounter(
   encounter: Encounter,
-  lifetimeXp: number
+  lifetimeXp: number,
+  promptVariant = 0
 ): GameState {
   const state: GameState = {
     encounterId: encounter.id,
@@ -60,6 +99,9 @@ export function startEncounter(
     flags: {},
     log: [],
     status: "playing",
+    prevChoiceTags: [],
+    stageChoices: [],
+    promptVariant,
   };
   const firstStage = encounter.stages[0];
   if (firstStage) {
@@ -78,10 +120,15 @@ export function applyChoice(
   state: GameState,
   choice: Choice
 ): GameState {
+  const currentStage = encounter.stages[state.stageIndex];
+  const stagePrompt = currentStage ? resolvePrompt(currentStage, state) : "";
+
   const next: GameState = {
     ...state,
     flags: { ...state.flags },
     log: [...state.log],
+    prevChoiceTags: [...state.prevChoiceTags],
+    stageChoices: [...state.stageChoices],
   };
 
   next.standing = clamp(next.standing + choice.standing, 0, 100);
@@ -89,6 +136,23 @@ export function applyChoice(
   next.sceneScore += choice.points;
   next.lifetimeXp += Math.max(0, choice.points);
   if (choice.setFlag) next.flags[choice.setFlag] = true;
+
+  // Track choice for debrief.
+  if (currentStage) {
+    next.stageChoices.push({
+      stageId: currentStage.id,
+      stagePrompt,
+      choiceId: choice.id,
+      choiceTag: choice.tag,
+      choicePoints: choice.points,
+      choiceLine: choice.line,
+      choicePrinciple: choice.principle,
+      allChoices: currentStage.choices,
+    });
+  }
+
+  // Track previous choice tags for opponent memory interpolation.
+  next.prevChoiceTags = [...next.prevChoiceTags, choice.tag].slice(-3);
 
   const verdict = verdictFor(choice.points);
   next.log.push({ type: "player", text: choice.line });
@@ -145,7 +209,6 @@ export function checkEnding(
   encounter: Encounter,
   state: GameState
 ): GameState {
-  // Early endings.
   if (state.momentum >= 100) {
     const wins = encounter.endings.filter((e) => e.result === "won");
     const best =
@@ -170,7 +233,6 @@ export function checkEnding(
         return state;
       }
     }
-    // Fallback to last ending if nothing matched.
     const last = encounter.endings[encounter.endings.length - 1];
     if (last) selectEnding(last, state);
   }

@@ -12,10 +12,10 @@ export function ChoiceCard({ choice, disabled, onSelect }: ChoiceCardProps) {
       type="button"
       disabled={disabled}
       onClick={() => onSelect(choice)}
-      className="group w-full rounded-lg border border-line bg-ink-2 p-4 text-left transition-all hover:border-accent hover:shadow-[0_0_0_1px_var(--accent)] focus:outline-none focus-visible:border-accent disabled:cursor-not-allowed disabled:opacity-50"
+      className="group w-full rounded-lg border border-line bg-ink-2 p-4 text-left transition-all hover:border-accent hover:shadow-[0_0_0_1px_var(--accent)] focus:outline-none focus-visible:border-accent disabled:cursor-not-allowed disabled:opacity-50 active:scale-[0.99] min-h-[56px] touch-manipulation"
     >
       <div
-        className="mb-1 font-mono text-xs uppercase tracking-wide"
+        className="mb-1.5 font-mono text-xs uppercase tracking-wide"
         style={{ color: "var(--accent)" }}
       >
         {choice.tag}

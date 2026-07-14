@@ -1,12 +1,26 @@
-import { useState } from "react";
+import { useRef, useState } from "react";
 import type { Choice, Encounter } from "../game/types";
 import type { GameState } from "../game/engine";
 import { applyChoice } from "../game/engine";
 import { resolveFreeform } from "../game/freeform";
+import { playVerdict } from "../game/sounds";
 import { DialogueLog } from "./DialogueLog";
 import { Meters } from "./Meters";
 import { ChoiceCard } from "./ChoiceCard";
 import { FreeformInput } from "./FreeformInput";
+
+const ARCHETYPE_TELLS: Record<string, string> = {
+  "Skeptical Principal":
+    "Softens when you name uncertainty before claiming you solved it. Hardens when you lead with confidence you have not yet earned.",
+  "Guarded Manager":
+    "Opens when you frame the fix as a shared interest, not a credit claim. Closes when they feel accused or undermined.",
+  "Territorial Counterpart":
+    "Needs to feel they chose to cooperate. Entrenches the moment they sense a power move.",
+  "Constrained Sponsor":
+    "Can only commit to paths they can see and defend upward. Vague asks leave them with nothing to say yes to.",
+  "External Counterpart":
+    "Reads your credibility from how specific you are. Vagueness signals weakness. Over-claiming destroys trust permanently.",
+};
 
 interface PlayScreenProps {
   encounter: Encounter;
@@ -23,6 +37,9 @@ export function PlayScreen({
 }: PlayScreenProps) {
   const [pop, setPop] = useState<{ points: number; key: number } | null>(null);
   const [resolving, setResolving] = useState(false);
+  const [tellOpen, setTellOpen] = useState(false);
+  const touchStartX = useRef(0);
+  const touchStartY = useRef(0);
 
   const stage = encounter.stages[state.stageIndex];
 
@@ -34,6 +51,7 @@ export function PlayScreen({
     if (resolving || state.status !== "playing") return;
     setResolving(true);
     triggerPop(choice.points);
+    playVerdict(choice.points);
     const next = applyChoice(encounter, state, choice);
     onStateChange(next);
     setResolving(false);
@@ -54,19 +72,59 @@ export function PlayScreen({
       principle: result.principle,
     };
     triggerPop(result.points);
+    playVerdict(result.points);
     const next = applyChoice(encounter, state, synthetic);
     onStateChange(next);
     setResolving(false);
   };
 
+  // Swipe right on the choices area selects first choice; swipe left selects last.
+  const handleTouchStart = (e: React.TouchEvent) => {
+    touchStartX.current = e.touches[0].clientX;
+    touchStartY.current = e.touches[0].clientY;
+  };
+
+  const handleTouchEnd = (e: React.TouchEvent) => {
+    if (!stage || resolving || state.status !== "playing") return;
+    const dx = e.changedTouches[0].clientX - touchStartX.current;
+    const dy = e.changedTouches[0].clientY - touchStartY.current;
+    if (Math.abs(dx) < 80 || Math.abs(dy) > Math.abs(dx) * 0.8) return;
+    // Horizontal swipe: pick first or last choice.
+    const choice = dx > 0 ? stage.choices[0] : stage.choices[stage.choices.length - 1];
+    if (choice) handleChoice(choice);
+  };
+
+  const tell = ARCHETYPE_TELLS[encounter.opponent.archetype];
+
   return (
     <div className="mx-auto flex w-full max-w-3xl flex-col gap-4 px-4 py-6">
       <div className="flex flex-col gap-1">
-        <h1 className="font-display text-2xl text-paper">{encounter.title}</h1>
+        <div className="flex items-start justify-between gap-3">
+          <h1 className="font-display text-2xl text-paper">{encounter.title}</h1>
+          {tell && (
+            <button
+              type="button"
+              onClick={() => setTellOpen((o) => !o)}
+              className="mt-1 flex-shrink-0 rounded-full border border-line px-2.5 py-0.5 font-mono text-[10px] uppercase tracking-wide text-paper-faint transition-colors hover:border-paper-faint hover:text-paper-dim"
+              title="Opponent tell"
+            >
+              {tellOpen ? "Hide tell" : "Show tell"}
+            </button>
+          )}
+        </div>
         <p className="font-body text-xs leading-relaxed text-paper-faint">
           {encounter.objective}
         </p>
       </div>
+
+      {tellOpen && tell && (
+        <div className="rounded-lg border border-line bg-ink-2 px-4 py-3">
+          <div className="mb-1 font-mono text-[10px] uppercase tracking-wide text-paper-faint">
+            {encounter.opponent.archetype}
+          </div>
+          <p className="font-body text-sm leading-relaxed text-paper-dim">{tell}</p>
+        </div>
+      )}
 
       <Meters
         standing={state.standing}
@@ -75,12 +133,16 @@ export function PlayScreen({
         pop={pop}
       />
 
-      <div className="max-h-[46vh] overflow-y-auto rounded-lg border border-line bg-ink px-1 py-2">
+      <div className="max-h-[40vh] overflow-y-auto rounded-lg border border-line bg-ink px-1 py-2 sm:max-h-[46vh]">
         <DialogueLog log={state.log} opponentName={encounter.opponent.name} />
       </div>
 
       {state.status === "playing" && stage && (
-        <div className="flex flex-col gap-3">
+        <div
+          className="flex flex-col gap-3"
+          onTouchStart={handleTouchStart}
+          onTouchEnd={handleTouchEnd}
+        >
           {stage.choices.map((choice) => (
             <ChoiceCard
               key={choice.id}

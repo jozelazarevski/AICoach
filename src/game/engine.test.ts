@@ -229,3 +229,43 @@ describe("checkEnding direct", () => {
     expect(after.status).toBe("playing");
   });
 });
+
+describe("stageChoices tracking", () => {
+  it("records each choice made for debrief", () => {
+    const enc = makeEncounter();
+    let state = startEncounter(enc, 0);
+    expect(state.stageChoices).toHaveLength(0);
+    state = applyChoice(enc, state, makeChoice({ id: "c1", tag: "My tag", points: 3 }));
+    expect(state.stageChoices).toHaveLength(1);
+    expect(state.stageChoices[0].choiceTag).toBe("My tag");
+    expect(state.stageChoices[0].choicePoints).toBe(3);
+  });
+
+  it("tracks prevChoiceTags for opponent memory", () => {
+    const enc = makeEncounter();
+    let state = startEncounter(enc, 0);
+    expect(state.prevChoiceTags).toHaveLength(0);
+    state = applyChoice(enc, state, makeChoice({ tag: "First move" }));
+    expect(state.prevChoiceTags).toContain("First move");
+  });
+});
+
+describe("prompt variant", () => {
+  it("startEncounter respects promptVariant seed", () => {
+    const enc = makeEncounter({
+      stages: [
+        {
+          id: "s1",
+          prompt: "default prompt",
+          prompts: ["variant A", "variant B"],
+          choices: [makeChoice({ id: "a" })],
+        },
+      ],
+    });
+    const s0 = startEncounter(enc, 0, 0);
+    const s1 = startEncounter(enc, 0, 1);
+    // First log entry is the opponent's opening line.
+    expect(s0.log[0].text).toBe("variant A");
+    expect(s1.log[0].text).toBe("variant B");
+  });
+});

@@ -1,12 +1,18 @@
 import { useCallback, useState } from "react";
 
+export interface CompletedRecord {
+  bestGrade: string;
+  bestScore: number;
+  won: boolean;
+  playCount: number;
+}
+
 export interface Progress {
   lifetimeXp: number;
-  completed: Record<
-    string,
-    { bestGrade: string; bestScore: number; won: boolean }
-  >;
+  completed: Record<string, CompletedRecord>;
   settings: { apiEnabled: boolean };
+  weaknesses: Record<string, number>; // archetype name → loss/partial count
+  dailyChallengeDate: string; // ISO date string of last daily completion
 }
 
 const STORAGE_KEY = "closed-door-progress";
@@ -15,6 +21,8 @@ const DEFAULT_PROGRESS: Progress = {
   lifetimeXp: 0,
   completed: {},
   settings: { apiEnabled: false },
+  weaknesses: {},
+  dailyChallengeDate: "",
 };
 
 const GRADE_ORDER = [
@@ -48,6 +56,8 @@ function loadProgress(): Progress {
       lifetimeXp: parsed.lifetimeXp ?? 0,
       completed: parsed.completed ?? {},
       settings: { apiEnabled: parsed.settings?.apiEnabled ?? false },
+      weaknesses: parsed.weaknesses ?? {},
+      dailyChallengeDate: parsed.dailyChallengeDate ?? "",
     };
   } catch {
     return { ...DEFAULT_PROGRESS };
@@ -72,7 +82,10 @@ export function useProgress() {
       grade: string,
       score: number,
       won: boolean,
-      xpGained: number
+      xpGained: number,
+      archetype: string,
+      result: "won" | "partial" | "lost",
+      isDaily: boolean
     ) => {
       setProgress((prev) => {
         const prior = prev.completed[encounterId];
@@ -81,17 +94,39 @@ export function useProgress() {
             ? prior.bestGrade
             : grade;
         const bestScore = prior ? Math.max(prior.bestScore, score) : score;
+
+        // Track weaknesses: partial or loss increments the archetype counter.
+        const weaknesses = { ...prev.weaknesses };
+        if (result !== "won") {
+          weaknesses[archetype] = (weaknesses[archetype] ?? 0) + 1;
+        } else if (weaknesses[archetype] && weaknesses[archetype] > 0) {
+          // Win reduces weakness count slowly.
+          weaknesses[archetype] = Math.max(0, weaknesses[archetype] - 1);
+        }
+
+        // Daily bonus XP: extra 10 for completing today's daily challenge.
+        const today = new Date().toISOString().split("T")[0];
+        const dailyBonus =
+          isDaily && prev.dailyChallengeDate !== today ? 10 : 0;
+        const dailyChallengeDate =
+          isDaily && prev.dailyChallengeDate !== today
+            ? today
+            : prev.dailyChallengeDate;
+
         const next: Progress = {
           ...prev,
-          lifetimeXp: prev.lifetimeXp + Math.max(0, xpGained),
+          lifetimeXp: prev.lifetimeXp + Math.max(0, xpGained) + dailyBonus,
           completed: {
             ...prev.completed,
             [encounterId]: {
               bestGrade,
               bestScore,
               won: (prior?.won ?? false) || won,
+              playCount: (prior?.playCount ?? 0) + 1,
             },
           },
+          weaknesses,
+          dailyChallengeDate,
         };
         save(next);
         return next;
@@ -112,7 +147,7 @@ export function useProgress() {
   }, []);
 
   const resetProgress = useCallback(() => {
-    const next = { ...DEFAULT_PROGRESS, completed: {} };
+    const next: Progress = { ...DEFAULT_PROGRESS };
     save(next);
     setProgress(next);
   }, []);
