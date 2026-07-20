@@ -29,7 +29,7 @@ const STORAGE_KEY = "closed-door-progress";
 const DEFAULT_PROGRESS: Progress = {
   lifetimeXp: 0,
   completed: {},
-  settings: { apiEnabled: false, introSeen: false, theme: "dark" },
+  settings: { apiEnabled: false, introSeen: false, theme: "light" },
   weaknesses: {},
   dailyChallengeDate: "",
 };
@@ -69,7 +69,7 @@ function loadProgress(): Progress {
         introSeen: parsed.settings?.introSeen ?? false,
         theme: THEMES.some((t) => t.id === parsed.settings?.theme)
           ? (parsed.settings!.theme as Theme)
-          : "dark",
+          : "light",
       },
       weaknesses: parsed.weaknesses ?? {},
       dailyChallengeDate: parsed.dailyChallengeDate ?? "",
