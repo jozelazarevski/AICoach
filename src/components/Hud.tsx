@@ -1,4 +1,4 @@
-import { rankFor, nextRank } from "../game/ranks";
+import { RANKS, rankFor, nextRank } from "../game/ranks";
 
 interface HudProps {
   lifetimeXp: number;
@@ -11,9 +11,8 @@ export function Hud({ lifetimeXp }: HudProps) {
   let fillPct = 100;
 
   // Compute floor as the highest rank xp <= lifetimeXp.
-  const RANKS_XP = [0, 35, 85, 150, 240];
   let currentFloor = 0;
-  for (const x of RANKS_XP) if (lifetimeXp >= x) currentFloor = x;
+  for (const r of RANKS) if (lifetimeXp >= r.xp) currentFloor = r.xp;
   if (next) {
     const span = next.xp - currentFloor;
     fillPct = span > 0 ? ((lifetimeXp - currentFloor) / span) * 100 : 100;

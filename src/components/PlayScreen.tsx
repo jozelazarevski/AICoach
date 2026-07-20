@@ -182,6 +182,14 @@ export function PlayScreen({
       />
 
       <div className="max-h-[40vh] overflow-y-auto rounded-lg border border-line bg-ink px-1 py-2 sm:max-h-[46vh]">
+        <div className="mx-3 mb-3 mt-1 border-l-2 border-line py-1 pl-3">
+          <div className="mb-1 font-mono text-[10px] uppercase tracking-wide text-paper-faint">
+            The scene
+          </div>
+          <p className="font-body text-xs italic leading-relaxed text-paper-dim">
+            {encounter.scene}
+          </p>
+        </div>
         <DialogueLog log={state.log} opponentName={encounter.opponent.name} />
       </div>
 

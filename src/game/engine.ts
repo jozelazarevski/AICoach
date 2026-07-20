@@ -241,7 +241,7 @@ export function checkEnding(
   return state;
 }
 
-const GRADE_LADDER = [
+export const GRADE_LADDER = [
   "A+",
   "A",
   "A-",

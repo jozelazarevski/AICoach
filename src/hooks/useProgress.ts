@@ -1,4 +1,5 @@
 import { useCallback, useState } from "react";
+import { GRADE_LADDER } from "../game/engine";
 
 export type Theme = "dark" | "light" | "sepia" | "mist";
 
@@ -34,25 +35,9 @@ const DEFAULT_PROGRESS: Progress = {
   dailyChallengeDate: "",
 };
 
-const GRADE_ORDER = [
-  "A+",
-  "A",
-  "A-",
-  "B+",
-  "B",
-  "B-",
-  "C+",
-  "C",
-  "C-",
-  "D+",
-  "D",
-  "D-",
-  "F",
-];
-
 function gradeRank(grade: string): number {
-  const idx = GRADE_ORDER.indexOf(grade);
-  return idx === -1 ? GRADE_ORDER.length : idx;
+  const idx = GRADE_LADDER.indexOf(grade);
+  return idx === -1 ? GRADE_LADDER.length : idx;
 }
 
 function loadProgress(): Progress {
