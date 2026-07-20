@@ -155,6 +155,7 @@ export default function App() {
           encounter={encounter}
           state={state}
           onStateChange={handleStateChange}
+          onExit={pickNew}
           apiEnabled={progress.settings.apiEnabled}
         />
       )}

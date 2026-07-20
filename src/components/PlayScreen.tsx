@@ -33,6 +33,7 @@ interface PlayScreenProps {
   encounter: Encounter;
   state: GameState;
   onStateChange: (next: GameState) => void;
+  onExit: () => void;
   apiEnabled: boolean;
 }
 
@@ -40,6 +41,7 @@ export function PlayScreen({
   encounter,
   state,
   onStateChange,
+  onExit,
   apiEnabled,
 }: PlayScreenProps) {
   const [pop, setPop] = useState<{ points: number; key: number } | null>(null);
@@ -148,7 +150,18 @@ export function PlayScreen({
     <div className="mx-auto flex w-full max-w-3xl flex-col gap-4 px-4 py-6">
       <div className="flex flex-col gap-1">
         <div className="flex items-start justify-between gap-3">
-          <h1 className="font-display text-2xl text-paper">{encounter.title}</h1>
+          <div className="flex items-center gap-3">
+            <button
+              type="button"
+              onClick={onExit}
+              className="mt-0.5 flex-shrink-0 rounded-full border border-line px-2.5 py-1 font-mono text-[11px] uppercase tracking-wide text-paper-faint transition-colors hover:border-paper-faint hover:text-paper-dim"
+              title="Leave this conversation"
+              aria-label="Back to all conversations"
+            >
+              ← Back
+            </button>
+            <h1 className="font-display text-2xl text-paper">{encounter.title}</h1>
+          </div>
           {tell && (
             <button
               type="button"
