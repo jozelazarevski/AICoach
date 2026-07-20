@@ -116,10 +116,42 @@ function stageIndexForGoto(encounter: Encounter, goto: string): number {
   return idx >= 0 ? idx : encounter.stages.length;
 }
 
-export function applyChoice(
+// Text-only overrides for LLM-generated dialogue. Scoring is never overridden.
+export interface TurnOverrides {
+  reaction?: string;
+  nextPrompt?: string;
+}
+
+// Predict the stage the opponent will speak next if this choice is applied,
+// with its resolved prompt, or null when the choice ends the encounter.
+export function peekNextTurn(
   encounter: Encounter,
   state: GameState,
   choice: Choice
+): { stage: Stage; prompt: string } | null {
+  const standing = clamp(state.standing + choice.standing, 0, 100);
+  const momentum = clamp(state.momentum + choice.momentum, 0, 100);
+  if (momentum >= 100 || standing <= 0) return null;
+  const idx = choice.goto
+    ? stageIndexForGoto(encounter, choice.goto)
+    : state.stageIndex + 1;
+  if (idx >= encounter.stages.length) return null;
+  const stage = encounter.stages[idx];
+  const peekState: GameState = {
+    ...state,
+    standing,
+    momentum,
+    flags: choice.setFlag ? { ...state.flags, [choice.setFlag]: true } : state.flags,
+    prevChoiceTags: [...state.prevChoiceTags, choice.tag].slice(-3),
+  };
+  return { stage, prompt: resolvePrompt(stage, peekState) };
+}
+
+export function applyChoice(
+  encounter: Encounter,
+  state: GameState,
+  choice: Choice,
+  overrides?: TurnOverrides
 ): GameState {
   const currentStage = encounter.stages[state.stageIndex];
   const stagePrompt = currentStage ? resolvePrompt(currentStage, state) : "";
@@ -165,7 +197,7 @@ export function applyChoice(
     points: choice.points,
     color: verdict.color,
   });
-  next.log.push({ type: "reaction", text: choice.reaction });
+  next.log.push({ type: "reaction", text: overrides?.reaction ?? choice.reaction });
   next.log.push({ type: "principle", text: choice.principle });
 
   if (choice.goto) {
@@ -180,7 +212,7 @@ export function applyChoice(
     if (upcoming) {
       advanced.log.push({
         type: "opponent",
-        text: resolvePrompt(upcoming, advanced),
+        text: overrides?.nextPrompt ?? resolvePrompt(upcoming, advanced),
       });
     }
   }

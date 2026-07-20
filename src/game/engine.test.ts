@@ -4,6 +4,7 @@ import {
   applyChoice,
   checkEnding,
   gradeFor,
+  peekNextTurn,
   xpForOutcome,
   type GameState,
 } from "./engine";
@@ -247,6 +248,41 @@ describe("stageChoices tracking", () => {
     expect(state.prevChoiceTags).toHaveLength(0);
     state = applyChoice(enc, state, makeChoice({ tag: "First move" }));
     expect(state.prevChoiceTags).toContain("First move");
+  });
+});
+
+describe("dynamic dialogue overrides", () => {
+  it("applyChoice uses reaction and nextPrompt overrides for text only", () => {
+    const enc = makeEncounter();
+    let state = startEncounter(enc, 0);
+    state = applyChoice(enc, state, makeChoice({ points: 3, standing: 5, momentum: 5 }), {
+      reaction: "custom reaction",
+      nextPrompt: "custom next line",
+    });
+    const texts = state.log.map((e) => e.text);
+    expect(texts).toContain("custom reaction");
+    expect(texts).toContain("custom next line");
+    // scoring unaffected by overrides
+    expect(state.sceneScore).toBe(3);
+  });
+
+  it("peekNextTurn returns the upcoming stage prompt", () => {
+    const enc = makeEncounter();
+    const state = startEncounter(enc, 0);
+    const peek = peekNextTurn(enc, state, makeChoice({}));
+    expect(peek?.stage.id).toBe("s2");
+    expect(peek?.prompt).toBe("p2");
+  });
+
+  it("peekNextTurn returns null when the choice ends the encounter", () => {
+    const enc = makeEncounter();
+    let state = startEncounter(enc, 0);
+    state = applyChoice(enc, state, makeChoice({}));
+    // now on last stage; next advance leaves the stage list
+    expect(peekNextTurn(enc, state, makeChoice({}))).toBeNull();
+    // meter-death also ends it
+    const fresh = startEncounter(enc, 0);
+    expect(peekNextTurn(enc, fresh, makeChoice({ standing: -999 }))).toBeNull();
   });
 });
 

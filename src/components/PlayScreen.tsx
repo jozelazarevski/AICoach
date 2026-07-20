@@ -1,9 +1,9 @@
 import { useRef, useState } from "react";
 import type { Choice, Encounter } from "../game/types";
 import type { GameState } from "../game/engine";
-import { applyChoice, resolvePrompt } from "../game/engine";
+import { applyChoice, peekNextTurn, resolvePrompt, type TurnOverrides } from "../game/engine";
 import { resolveFreeform } from "../game/freeform";
-import { llmJudgeLine } from "../game/llm";
+import { llmDynamicTurn, llmJudgeLine } from "../game/llm";
 import { playVerdict } from "../game/sounds";
 import { DialogueLog } from "./DialogueLog";
 import { Meters } from "./Meters";
@@ -57,12 +57,27 @@ export function PlayScreen({
     setPop({ points, key: Date.now() });
   };
 
-  const handleChoice = (choice: Choice) => {
+  const handleChoice = async (choice: Choice) => {
     if (resolving || state.status !== "playing") return;
     setResolving(true);
+
+    let overrides: TurnOverrides | undefined;
+    if (apiEnabled) {
+      setThinking(true);
+      try {
+        const peek = peekNextTurn(encounter, state, choice);
+        const turn = await llmDynamicTurn(encounter, state, choice, peek?.prompt ?? null);
+        overrides = { reaction: turn.reaction, nextPrompt: turn.nextPrompt };
+      } catch {
+        overrides = undefined; // fall back to scripted dialogue
+      } finally {
+        setThinking(false);
+      }
+    }
+
     triggerPop(choice.points);
     playVerdict(choice.points);
-    const next = applyChoice(encounter, state, choice);
+    const next = applyChoice(encounter, state, choice, overrides);
     onStateChange(next);
     setResolving(false);
   };
@@ -72,15 +87,27 @@ export function PlayScreen({
     setResolving(true);
 
     let synthetic: Choice;
+    let overrides: TurnOverrides | undefined;
     if (apiEnabled) {
       setThinking(true);
       try {
+        // Peek with a neutral probe first; re-peek with real deltas after judging.
         const judged = await llmJudgeLine(
           encounter,
           stage,
           resolvePrompt(stage, state),
           state,
-          text
+          text,
+          peekNextTurn(encounter, state, {
+            id: "probe",
+            tag: "",
+            line: "",
+            points: 0,
+            standing: 0,
+            momentum: 0,
+            reaction: "",
+            principle: "",
+          })?.prompt ?? null
         );
         synthetic = {
           id: "freeform",
@@ -91,6 +118,12 @@ export function PlayScreen({
           momentum: judged.momentum,
           reaction: judged.reaction,
           principle: judged.principle,
+        };
+        // Only keep the generated next line if the judged deltas do not end the game.
+        const realNext = peekNextTurn(encounter, state, synthetic);
+        overrides = {
+          reaction: judged.reaction,
+          nextPrompt: realNext ? judged.nextPrompt : undefined,
         };
       } catch {
         const result = resolveFreeform(text, stage, state, { apiEnabled });
@@ -123,7 +156,7 @@ export function PlayScreen({
 
     triggerPop(synthetic.points);
     playVerdict(synthetic.points);
-    const next = applyChoice(encounter, state, synthetic);
+    const next = applyChoice(encounter, state, synthetic, overrides);
     onStateChange(next);
     setResolving(false);
   };
