@@ -35,8 +35,16 @@ import { journalistCall } from "./encounters/journalist-call";
 import { boardPressure } from "./encounters/board-pressure";
 import { clientUltimatum } from "./encounters/client-ultimatum";
 import { regulatorAudit } from "./encounters/regulator-audit";
+import { carLot } from "./encounters/car-lot";
+import { rentIncrease } from "./encounters/rent-increase";
+import { theRefund } from "./encounters/the-refund";
+import { familyLoan } from "./encounters/family-loan";
 
 export const ENCOUNTERS = [
+  carLot,
+  rentIncrease,
+  theRefund,
+  familyLoan,
   managerStall,
   sponsorWindow,
   principalBudget,

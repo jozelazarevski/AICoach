@@ -43,7 +43,7 @@ function dailyEncounterId(encounters: Encounter[]): string {
 }
 
 export default function App() {
-  const { progress, updateProgress } = useProgress();
+  const { progress, updateProgress, dismissIntro } = useProgress();
   const [screen, setScreen] = useState<Screen>("start");
   const [encounter, setEncounter] = useState<Encounter | null>(null);
   const [state, setState] = useState<GameState | null>(null);
@@ -136,6 +136,7 @@ export default function App() {
           progress={progress}
           dailyEncounterId={dailyId}
           onStart={start}
+          onDismissIntro={dismissIntro}
         />
       )}
 

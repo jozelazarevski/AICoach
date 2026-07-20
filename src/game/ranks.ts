@@ -4,11 +4,11 @@ export interface Rank {
 }
 
 export const RANKS: Rank[] = [
-  { name: "Senior Director", xp: 0 },
-  { name: "On the Radar", xp: 35 },
-  { name: "In the Room", xp: 85 },
-  { name: "VP Shortlist", xp: 150 },
-  { name: "Vice President", xp: 240 },
+  { name: "Finding Your Voice", xp: 0 },
+  { name: "Holding Your Own", xp: 35 },
+  { name: "Reading the Room", xp: 85 },
+  { name: "Smooth Operator", xp: 150 },
+  { name: "Silver Tongue", xp: 240 },
 ];
 
 export function rankFor(xp: number): string {

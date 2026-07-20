@@ -1,3 +1,4 @@
+import { useState } from "react";
 import type { Encounter, Difficulty } from "../game/types";
 import type { Progress } from "../hooks/useProgress";
 import { Hud } from "./Hud";
@@ -7,6 +8,7 @@ interface StartScreenProps {
   progress: Progress;
   dailyEncounterId: string;
   onStart: (encounter: Encounter) => void;
+  onDismissIntro: () => void;
 }
 
 const DIFFICULTY_COLOR: Record<Difficulty, string> = {
@@ -15,11 +17,20 @@ const DIFFICULTY_COLOR: Record<Difficulty, string> = {
   adversarial: "#D9633C",
 };
 
+// Player-facing names. Internal keys stay the same so content and saves don't break.
+const DIFFICULTY_LABEL: Record<Difficulty, string> = {
+  measured: "Everyday",
+  pointed: "Tense",
+  adversarial: "High stakes",
+};
+
 const UNLOCK_NEEDED: Record<Difficulty, { need: number; fromDifficulty: Difficulty | null }> = {
   measured: { need: 0, fromDifficulty: null },
   pointed: { need: 3, fromDifficulty: "measured" },
   adversarial: { need: 3, fromDifficulty: "pointed" },
 };
+
+type SettingFilter = "all" | "work" | "life";
 
 function countCompleted(encounters: Encounter[], progress: Progress, difficulty: Difficulty): number {
   return encounters.filter((e) => e.difficulty === difficulty && !!progress.completed[e.id]).length;
@@ -50,27 +61,81 @@ function DifficultyBadge({ difficulty }: { difficulty: Difficulty }) {
       className="rounded-full px-2 py-0.5 font-mono text-[10px] uppercase tracking-wide"
       style={{ color, border: `1px solid ${color}`, background: `${color}1A` }}
     >
-      {difficulty}
+      {DIFFICULTY_LABEL[difficulty]}
     </span>
   );
 }
 
-export function StartScreen({ encounters, progress, dailyEncounterId, onStart }: StartScreenProps) {
+function HowToPlay({ onDismiss }: { onDismiss: () => void }) {
+  return (
+    <div className="rounded-lg border border-line bg-ink-2 p-5">
+      <h2 className="font-display text-lg text-paper">How it works</h2>
+      <ol className="mt-3 flex flex-col gap-2.5">
+        <li className="flex gap-3 font-body text-sm leading-relaxed text-paper-dim">
+          <span className="font-mono text-xs text-paper-faint">1</span>
+          <span>
+            Someone across the table wants something. So do you. A landlord, a car
+            salesman, your boss, your brother.
+          </span>
+        </li>
+        <li className="flex gap-3 font-body text-sm leading-relaxed text-paper-dim">
+          <span className="font-mono text-xs text-paper-faint">2</span>
+          <span>
+            Each turn, pick what you say next, or type your own words.{" "}
+            <span className="text-paper">Respect</span> is how seriously they take
+            you. <span className="text-paper">Progress</span> is how close you are
+            to getting what you want.
+          </span>
+        </li>
+        <li className="flex gap-3 font-body text-sm leading-relaxed text-paper-dim">
+          <span className="font-mono text-xs text-paper-faint">3</span>
+          <span>
+            Fill Progress before Respect runs out. Every choice, good or bad,
+            teaches you a real technique you can use the next day.
+          </span>
+        </li>
+      </ol>
+      <button
+        type="button"
+        onClick={onDismiss}
+        className="mt-4 rounded-lg border border-accent px-4 py-2 font-mono text-xs uppercase tracking-wide transition-colors hover:bg-accent/10"
+        style={{ color: "var(--accent)" }}
+      >
+        Got it
+      </button>
+    </div>
+  );
+}
+
+export function StartScreen({
+  encounters,
+  progress,
+  dailyEncounterId,
+  onStart,
+  onDismissIntro,
+}: StartScreenProps) {
+  const [filter, setFilter] = useState<SettingFilter>("all");
   const weakness = topWeakness(progress.weaknesses);
   const d = new Date();
   const today = `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, "0")}-${String(d.getDate()).padStart(2, "0")}`;
   const dailyDone = progress.dailyChallengeDate === today;
+
+  const visible = encounters.filter(
+    (e) => filter === "all" || (e.setting ?? "work") === filter
+  );
 
   return (
     <div className="mx-auto w-full max-w-4xl px-4 py-8">
       <header className="mb-6">
         <h1 className="font-display text-4xl text-paper">Closed Door</h1>
         <p className="mt-1 font-body text-sm text-paper-dim">
-          Win the rooms that decide your career. Read the person, pick the move.
+          Win the conversations that matter. At work, at home, everywhere.
         </p>
       </header>
 
       <div className="mb-6 flex flex-col gap-3">
+        {!progress.settings.introSeen && <HowToPlay onDismiss={onDismissIntro} />}
+
         <Hud lifetimeXp={progress.lifetimeXp} />
 
         {weakness && (
@@ -79,14 +144,37 @@ export function StartScreen({ encounters, progress, dailyEncounterId, onStart }:
               Pattern
             </span>
             <span className="font-body text-xs text-paper-dim">
-              You tend to struggle against <span className="text-paper">{weakness}</span>. Look for those encounters below.
+              You tend to struggle against <span className="text-paper">{weakness}</span> types. Look for those conversations below.
             </span>
           </div>
         )}
+
+        <div className="flex gap-1 self-start rounded-lg border border-line bg-ink-2 p-1">
+          {(
+            [
+              ["all", "All"],
+              ["life", "Everyday life"],
+              ["work", "Work"],
+            ] as [SettingFilter, string][]
+          ).map(([key, label]) => (
+            <button
+              key={key}
+              type="button"
+              onClick={() => setFilter(key)}
+              className="rounded-md px-3 py-1.5 font-mono text-[11px] uppercase tracking-wide transition-colors"
+              style={{
+                background: filter === key ? "var(--ink-3)" : "transparent",
+                color: filter === key ? "var(--paper)" : "var(--paper-faint)",
+              }}
+            >
+              {label}
+            </button>
+          ))}
+        </div>
       </div>
 
       <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
-        {encounters.map((enc) => {
+        {visible.map((enc) => {
           const record = progress.completed[enc.id];
           const unlocked = isUnlocked(enc, encounters, progress);
           const rule = UNLOCK_NEEDED[enc.difficulty];
@@ -124,15 +212,11 @@ export function StartScreen({ encounters, progress, dailyEncounterId, onStart }:
                 <span
                   className="font-mono text-xs"
                   style={{
-                    color: record
-                      ? "#6FA56B"
-                      : unlocked
-                      ? "var(--paper-faint)"
-                      : "var(--paper-faint)",
+                    color: record ? "#6FA56B" : "var(--paper-faint)",
                   }}
                 >
                   {!unlocked
-                    ? `Locked — complete ${rule.need} ${rule.fromDifficulty} encounters`
+                    ? `Locked — finish ${rule.need} ${DIFFICULTY_LABEL[rule.fromDifficulty ?? "measured"].toLowerCase()} conversations first`
                     : record
                     ? `Best ${record.bestGrade}`
                     : "New"}
@@ -140,7 +224,7 @@ export function StartScreen({ encounters, progress, dailyEncounterId, onStart }:
               </div>
               <h2 className="font-display text-xl text-paper">{enc.title}</h2>
               <div className="mt-1 font-mono text-[11px] uppercase tracking-wide text-paper-faint">
-                {enc.opponent.name} · {enc.opponent.archetype}
+                {enc.opponent.name}
               </div>
               <p className="mt-3 font-body text-sm leading-relaxed text-paper-dim">
                 {enc.opponent.blurb}

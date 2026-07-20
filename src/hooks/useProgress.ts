@@ -10,7 +10,7 @@ export interface CompletedRecord {
 export interface Progress {
   lifetimeXp: number;
   completed: Record<string, CompletedRecord>;
-  settings: { apiEnabled: boolean };
+  settings: { apiEnabled: boolean; introSeen: boolean };
   weaknesses: Record<string, number>; // archetype name → loss/partial count
   dailyChallengeDate: string; // ISO date string of last daily completion
 }
@@ -20,7 +20,7 @@ const STORAGE_KEY = "closed-door-progress";
 const DEFAULT_PROGRESS: Progress = {
   lifetimeXp: 0,
   completed: {},
-  settings: { apiEnabled: false },
+  settings: { apiEnabled: false, introSeen: false },
   weaknesses: {},
   dailyChallengeDate: "",
 };
@@ -55,7 +55,10 @@ function loadProgress(): Progress {
     return {
       lifetimeXp: parsed.lifetimeXp ?? 0,
       completed: parsed.completed ?? {},
-      settings: { apiEnabled: parsed.settings?.apiEnabled ?? false },
+      settings: {
+        apiEnabled: parsed.settings?.apiEnabled ?? false,
+        introSeen: parsed.settings?.introSeen ?? false,
+      },
       weaknesses: parsed.weaknesses ?? {},
       dailyChallengeDate: parsed.dailyChallengeDate ?? "",
     };
@@ -147,11 +150,22 @@ export function useProgress() {
     });
   }, []);
 
+  const dismissIntro = useCallback(() => {
+    setProgress((prev) => {
+      const next: Progress = {
+        ...prev,
+        settings: { ...prev.settings, introSeen: true },
+      };
+      save(next);
+      return next;
+    });
+  }, []);
+
   const resetProgress = useCallback(() => {
     const next: Progress = { ...DEFAULT_PROGRESS };
     save(next);
     setProgress(next);
   }, []);
 
-  return { progress, updateProgress, setApiEnabled, resetProgress };
+  return { progress, updateProgress, setApiEnabled, dismissIntro, resetProgress };
 }

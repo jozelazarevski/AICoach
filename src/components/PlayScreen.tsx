@@ -20,6 +20,12 @@ const ARCHETYPE_TELLS: Record<string, string> = {
     "Can only commit to paths they can see and defend upward. Vague asks leave them with nothing to say yes to.",
   "External Counterpart":
     "Reads your credibility from how specific you are. Vagueness signals weakness. Over-claiming destroys trust permanently.",
+  "Deal Maker":
+    "Negotiates every day; you do it twice a year. Loses power when you name numbers calmly and look ready to walk away. Feeds on excitement and fake deadlines.",
+  "Gatekeeper":
+    "Enforces rules they did not write. Fights you if you attack the policy. Helps you if you make it easy to say yes inside it. Ask what they can do, not why they cannot.",
+  "Close to Home":
+    "The relationship continues after the conversation ends. A win that costs trust is a loss. Softens when you are honest about your own limits. Hardens when you keep score.",
 };
 
 interface PlayScreenProps {

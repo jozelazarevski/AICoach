@@ -185,13 +185,13 @@ describe("gradeFor", () => {
 
 describe("ranks", () => {
   it("rankFor returns correct tier", () => {
-    expect(rankFor(0)).toBe("Senior Director");
-    expect(rankFor(40)).toBe("On the Radar");
-    expect(rankFor(90)).toBe("In the Room");
-    expect(rankFor(300)).toBe("Vice President");
+    expect(rankFor(0)).toBe("Finding Your Voice");
+    expect(rankFor(40)).toBe("Holding Your Own");
+    expect(rankFor(90)).toBe("Reading the Room");
+    expect(rankFor(300)).toBe("Silver Tongue");
   });
   it("nextRank detects rank-up boundary", () => {
-    expect(nextRank(0)).toEqual({ name: "On the Radar", xp: 35 });
+    expect(nextRank(0)).toEqual({ name: "Holding Your Own", xp: 35 });
     expect(nextRank(300)).toBeNull();
   });
   it("rank-up detection across a gain", () => {

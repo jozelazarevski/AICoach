@@ -63,6 +63,7 @@ export interface Encounter {
   title: string;
   opponent: Opponent;
   difficulty: Difficulty;
+  setting?: "work" | "life"; // defaults to "work"
   scene: string;
   objective: string;
   startStanding: number;

@@ -47,11 +47,11 @@ function SpringBar({
 export function Meters({ standing, momentum, sceneScore, pop }: MetersProps) {
   return (
     <div className="relative flex flex-col gap-3 rounded-lg border border-line bg-ink-2 p-4">
-      <SpringBar label="Standing" value={standing} color={standingColor(standing)} />
-      <SpringBar label="Momentum" value={momentum} color="var(--accent)" />
+      <SpringBar label="Respect" value={standing} color={standingColor(standing)} />
+      <SpringBar label="Progress" value={momentum} color="var(--accent)" />
       <div className="flex items-center justify-between border-t border-line pt-3">
         <span className="font-mono text-[10px] uppercase tracking-wide text-paper-faint">
-          Scene score
+          Score
         </span>
         <div className="relative">
           <span className="font-display text-lg text-paper">{sceneScore}</span>
