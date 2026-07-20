@@ -13,6 +13,17 @@
   --accent: #4F8FB5;
 }
 
+:root[data-theme="light"] {
+  --ink: #F5F2EA;
+  --ink-2: #FDFCF8;
+  --ink-3: #EAE5D8;
+  --line: #D9D3C4;
+  --paper: #1D222B;
+  --paper-dim: #4B5362;
+  --paper-faint: #878E9C;
+  --accent: #3D7EA6;
+}
+
 html,
 body,
 #root {

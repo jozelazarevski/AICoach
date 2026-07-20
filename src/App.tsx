@@ -43,7 +43,7 @@ function dailyEncounterId(encounters: Encounter[]): string {
 }
 
 export default function App() {
-  const { progress, updateProgress, dismissIntro } = useProgress();
+  const { progress, updateProgress, setApiEnabled, setTheme, dismissIntro } = useProgress();
   const [screen, setScreen] = useState<Screen>("start");
   const [encounter, setEncounter] = useState<Encounter | null>(null);
   const [state, setState] = useState<GameState | null>(null);
@@ -51,9 +51,17 @@ export default function App() {
   const [rankUp, setRankUp] = useState<string | null>(null);
 
   useEffect(() => {
-    const accent = encounter ? ACCENT[encounter.difficulty] : "#4F8FB5";
-    document.documentElement.style.setProperty("--accent", accent);
+    if (encounter) {
+      document.documentElement.style.setProperty("--accent", ACCENT[encounter.difficulty]);
+    } else {
+      // Let the stylesheet's per-theme accent apply on the start screen.
+      document.documentElement.style.removeProperty("--accent");
+    }
   }, [encounter]);
+
+  useEffect(() => {
+    document.documentElement.dataset.theme = progress.settings.theme;
+  }, [progress.settings.theme]);
 
   const dailyId = useMemo(() => dailyEncounterId(ENCOUNTERS), []);
 
@@ -137,6 +145,8 @@ export default function App() {
           dailyEncounterId={dailyId}
           onStart={start}
           onDismissIntro={dismissIntro}
+          onSetTheme={setTheme}
+          onSetApiEnabled={setApiEnabled}
         />
       )}
 

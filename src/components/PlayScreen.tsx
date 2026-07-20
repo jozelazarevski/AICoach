@@ -1,8 +1,9 @@
 import { useRef, useState } from "react";
 import type { Choice, Encounter } from "../game/types";
 import type { GameState } from "../game/engine";
-import { applyChoice } from "../game/engine";
+import { applyChoice, resolvePrompt } from "../game/engine";
 import { resolveFreeform } from "../game/freeform";
+import { llmJudgeLine } from "../game/llm";
 import { playVerdict } from "../game/sounds";
 import { DialogueLog } from "./DialogueLog";
 import { Meters } from "./Meters";
@@ -43,6 +44,7 @@ export function PlayScreen({
 }: PlayScreenProps) {
   const [pop, setPop] = useState<{ points: number; key: number } | null>(null);
   const [resolving, setResolving] = useState(false);
+  const [thinking, setThinking] = useState(false);
   const [tellOpen, setTellOpen] = useState(false);
   const touchStartX = useRef(0);
   const touchStartY = useRef(0);
@@ -63,22 +65,62 @@ export function PlayScreen({
     setResolving(false);
   };
 
-  const handleFreeform = (text: string) => {
+  const handleFreeform = async (text: string) => {
     if (resolving || state.status !== "playing" || !stage) return;
     setResolving(true);
-    const result = resolveFreeform(text, stage, state, { apiEnabled });
-    const synthetic: Choice = {
-      id: "freeform",
-      tag: result.label,
-      line: text,
-      points: result.points,
-      standing: result.standing,
-      momentum: result.momentum,
-      reaction: result.reaction,
-      principle: result.principle,
-    };
-    triggerPop(result.points);
-    playVerdict(result.points);
+
+    let synthetic: Choice;
+    if (apiEnabled) {
+      setThinking(true);
+      try {
+        const judged = await llmJudgeLine(
+          encounter,
+          stage,
+          resolvePrompt(stage, state),
+          state,
+          text
+        );
+        synthetic = {
+          id: "freeform",
+          tag: "your words",
+          line: text,
+          points: judged.points,
+          standing: judged.standing,
+          momentum: judged.momentum,
+          reaction: judged.reaction,
+          principle: judged.principle,
+        };
+      } catch {
+        const result = resolveFreeform(text, stage, state, { apiEnabled });
+        synthetic = {
+          id: "freeform",
+          tag: result.label,
+          line: text,
+          points: result.points,
+          standing: result.standing,
+          momentum: result.momentum,
+          reaction: result.reaction,
+          principle: result.principle,
+        };
+      } finally {
+        setThinking(false);
+      }
+    } else {
+      const result = resolveFreeform(text, stage, state, { apiEnabled });
+      synthetic = {
+        id: "freeform",
+        tag: result.label,
+        line: text,
+        points: result.points,
+        standing: result.standing,
+        momentum: result.momentum,
+        reaction: result.reaction,
+        principle: result.principle,
+      };
+    }
+
+    triggerPop(synthetic.points);
+    playVerdict(synthetic.points);
     const next = applyChoice(encounter, state, synthetic);
     onStateChange(next);
     setResolving(false);
@@ -160,8 +202,15 @@ export function PlayScreen({
           <FreeformInput
             key={stage.id}
             disabled={resolving}
+            aiLive={apiEnabled}
             onSubmit={handleFreeform}
           />
+          {thinking && (
+            <div className="flex items-center gap-2 px-1 font-mono text-[11px] uppercase tracking-wide text-paper-faint">
+              <span className="inline-block h-1.5 w-1.5 animate-pulse rounded-full bg-accent" />
+              {encounter.opponent.name} is thinking...
+            </div>
+          )}
         </div>
       )}
     </div>

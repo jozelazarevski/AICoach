@@ -9,6 +9,8 @@ interface StartScreenProps {
   dailyEncounterId: string;
   onStart: (encounter: Encounter) => void;
   onDismissIntro: () => void;
+  onSetTheme: (theme: "dark" | "light") => void;
+  onSetApiEnabled: (enabled: boolean) => void;
 }
 
 const DIFFICULTY_COLOR: Record<Difficulty, string> = {
@@ -113,8 +115,11 @@ export function StartScreen({
   dailyEncounterId,
   onStart,
   onDismissIntro,
+  onSetTheme,
+  onSetApiEnabled,
 }: StartScreenProps) {
   const [filter, setFilter] = useState<SettingFilter>("all");
+  const [settingsOpen, setSettingsOpen] = useState(false);
   const weakness = topWeakness(progress.weaknesses);
   const d = new Date();
   const today = `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, "0")}-${String(d.getDate()).padStart(2, "0")}`;
@@ -126,12 +131,62 @@ export function StartScreen({
 
   return (
     <div className="mx-auto w-full max-w-4xl px-4 py-8">
-      <header className="mb-6">
-        <h1 className="font-display text-4xl text-paper">Closed Door</h1>
-        <p className="mt-1 font-body text-sm text-paper-dim">
-          Win the conversations that matter. At work, at home, everywhere.
-        </p>
+      <header className="mb-6 flex items-start justify-between gap-3">
+        <div>
+          <h1 className="font-display text-4xl text-paper">Closed Door</h1>
+          <p className="mt-1 font-body text-sm text-paper-dim">
+            Win the conversations that matter. At work, at home, everywhere.
+          </p>
+        </div>
+        <div className="mt-2 flex items-center gap-2">
+          <button
+            type="button"
+            onClick={() =>
+              onSetTheme(progress.settings.theme === "dark" ? "light" : "dark")
+            }
+            className="rounded-full border border-line px-3 py-1 font-mono text-[10px] uppercase tracking-wide text-paper-faint transition-colors hover:border-paper-faint hover:text-paper-dim"
+            title="Switch theme"
+          >
+            {progress.settings.theme === "dark" ? "Light" : "Dark"}
+          </button>
+          <button
+            type="button"
+            onClick={() => setSettingsOpen((o) => !o)}
+            className="rounded-full border border-line px-3 py-1 font-mono text-[10px] uppercase tracking-wide text-paper-faint transition-colors hover:border-paper-faint hover:text-paper-dim"
+          >
+            Settings
+          </button>
+        </div>
       </header>
+
+      {settingsOpen && (
+        <div className="mb-6 rounded-lg border border-line bg-ink-2 p-5">
+          <h2 className="font-display text-lg text-paper">Settings</h2>
+          <div className="mt-3 flex items-start justify-between gap-4">
+            <div>
+              <div className="font-body text-sm text-paper">Live conversations</div>
+              <p className="mt-1 max-w-md font-body text-xs leading-relaxed text-paper-dim">
+                When on, typing your own words gets a real reply: the opponent
+                answers what you actually said and your line is scored on its
+                merits, not by keyword matching. Requires the game's server to
+                have an AI key configured; if it does not, the game quietly
+                falls back to offline scoring.
+              </p>
+            </div>
+            <button
+              type="button"
+              onClick={() => onSetApiEnabled(!progress.settings.apiEnabled)}
+              className="mt-1 flex-shrink-0 rounded-full border px-3 py-1 font-mono text-[10px] uppercase tracking-wide transition-colors"
+              style={{
+                color: progress.settings.apiEnabled ? "var(--accent)" : "var(--paper-faint)",
+                borderColor: progress.settings.apiEnabled ? "var(--accent)" : "var(--line)",
+              }}
+            >
+              {progress.settings.apiEnabled ? "On" : "Off"}
+            </button>
+          </div>
+        </div>
+      )}
 
       <div className="mb-6 flex flex-col gap-3">
         {!progress.settings.introSeen && <HowToPlay onDismiss={onDismissIntro} />}

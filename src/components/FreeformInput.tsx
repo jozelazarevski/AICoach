@@ -2,10 +2,11 @@ import { useState } from "react";
 
 interface FreeformInputProps {
   disabled?: boolean;
+  aiLive?: boolean;
   onSubmit: (text: string) => void;
 }
 
-export function FreeformInput({ disabled, onSubmit }: FreeformInputProps) {
+export function FreeformInput({ disabled, aiLive, onSubmit }: FreeformInputProps) {
   const [value, setValue] = useState("");
   const [submitted, setSubmitted] = useState(false);
 
@@ -20,8 +21,17 @@ export function FreeformInput({ disabled, onSubmit }: FreeformInputProps) {
 
   return (
     <div className="rounded-lg border border-line bg-ink-2 p-3">
-      <label className="mb-2 block font-mono text-xs uppercase tracking-wide text-paper-faint">
+      <label className="mb-2 flex items-center gap-2 font-mono text-xs uppercase tracking-wide text-paper-faint">
         Or say it in your own words
+        {aiLive && (
+          <span
+            className="rounded-full border px-1.5 py-px text-[9px]"
+            style={{ color: "var(--accent)", borderColor: "var(--accent)" }}
+            title="They respond to your actual words"
+          >
+            Live
+          </span>
+        )}
       </label>
       <textarea
         value={value}
@@ -31,7 +41,11 @@ export function FreeformInput({ disabled, onSubmit }: FreeformInputProps) {
           if (e.key === "Enter" && (e.metaKey || e.ctrlKey)) handleSubmit();
         }}
         rows={2}
-        placeholder="Type what you would actually say."
+        placeholder={
+          aiLive
+            ? "Type what you would actually say. They will answer you directly."
+            : "Type what you would actually say."
+        }
         className="w-full resize-none rounded-md border border-line bg-ink px-3 py-2 font-body text-sm text-paper placeholder:text-paper-faint focus:border-accent focus:outline-none disabled:opacity-50"
       />
       <div className="mt-2 flex justify-end">
