@@ -1,4 +1,4 @@
-import { useRef, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import type { Choice, Encounter } from "../game/types";
 import type { GameState } from "../game/engine";
 import { applyChoice, peekNextTurn, resolvePrompt, type TurnOverrides } from "../game/engine";
@@ -47,9 +47,18 @@ export function PlayScreen({
   const [pop, setPop] = useState<{ points: number; key: number } | null>(null);
   const [resolving, setResolving] = useState(false);
   const [thinking, setThinking] = useState(false);
+  const [pending, setPending] = useState<string | null>(null);
+  const [aiFallback, setAiFallback] = useState(false);
   const [tellOpen, setTellOpen] = useState(false);
   const touchStartX = useRef(0);
   const touchStartY = useRef(0);
+  const pendingRef = useRef<HTMLDivElement>(null);
+
+  useEffect(() => {
+    if (pending) {
+      pendingRef.current?.scrollIntoView({ behavior: "smooth", block: "end" });
+    }
+  }, [pending]);
 
   const stage = encounter.stages[state.stageIndex];
 
@@ -64,14 +73,17 @@ export function PlayScreen({
     let overrides: TurnOverrides | undefined;
     if (apiEnabled) {
       setThinking(true);
+      setPending(choice.line);
       try {
         const peek = peekNextTurn(encounter, state, choice);
         const turn = await llmDynamicTurn(encounter, state, choice, peek?.prompt ?? null);
         overrides = { reaction: turn.reaction, nextPrompt: turn.nextPrompt };
       } catch {
         overrides = undefined; // fall back to scripted dialogue
+        setAiFallback(true);
       } finally {
         setThinking(false);
+        setPending(null);
       }
     }
 
@@ -90,6 +102,7 @@ export function PlayScreen({
     let overrides: TurnOverrides | undefined;
     if (apiEnabled) {
       setThinking(true);
+      setPending(text);
       try {
         // Peek with a neutral probe first; re-peek with real deltas after judging.
         const judged = await llmJudgeLine(
@@ -126,6 +139,7 @@ export function PlayScreen({
           nextPrompt: realNext ? judged.nextPrompt : undefined,
         };
       } catch {
+        setAiFallback(true);
         const result = resolveFreeform(text, stage, state, { apiEnabled });
         synthetic = {
           id: "freeform",
@@ -139,6 +153,7 @@ export function PlayScreen({
         };
       } finally {
         setThinking(false);
+        setPending(null);
       }
     } else {
       const result = resolveFreeform(text, stage, state, { apiEnabled });
@@ -237,7 +252,41 @@ export function PlayScreen({
           </p>
         </div>
         <DialogueLog log={state.log} opponentName={encounter.opponent.name} />
+        {pending && (
+          <div ref={pendingRef} className="mt-3 flex flex-col gap-3">
+            <div className="rounded-lg rounded-tr-sm bg-ink-3 px-4 py-3">
+              <div className="mb-1 text-right font-mono text-[10px] uppercase tracking-wide text-paper-faint">
+                You
+              </div>
+              <p className="font-body text-sm leading-relaxed text-paper">{pending}</p>
+            </div>
+            {thinking && (
+              <div className="ml-4 flex w-fit items-center gap-1.5 rounded-lg rounded-tl-sm bg-ink-2 px-4 py-3">
+                <span className="typing-dot" />
+                <span className="typing-dot" />
+                <span className="typing-dot" />
+              </div>
+            )}
+          </div>
+        )}
       </div>
+
+      {aiFallback && apiEnabled && (
+        <div className="flex items-start justify-between gap-3 rounded-lg border border-line bg-ink-2 px-4 py-2.5">
+          <p className="font-body text-xs leading-relaxed text-paper-dim">
+            Live AI is not reachable right now, so the scripted dialogue is
+            playing instead. If you run this game, set ANTHROPIC_API_KEY on the
+            server to turn live conversations on.
+          </p>
+          <button
+            type="button"
+            onClick={() => setAiFallback(false)}
+            className="flex-shrink-0 font-mono text-[10px] uppercase tracking-wide text-paper-faint hover:text-paper-dim"
+          >
+            Dismiss
+          </button>
+        </div>
+      )}
 
       {state.status === "playing" && stage && (
         <div
@@ -259,12 +308,6 @@ export function PlayScreen({
             aiLive={apiEnabled}
             onSubmit={handleFreeform}
           />
-          {thinking && (
-            <div className="flex items-center gap-2 px-1 font-mono text-[11px] uppercase tracking-wide text-paper-faint">
-              <span className="inline-block h-1.5 w-1.5 animate-pulse rounded-full bg-accent" />
-              {encounter.opponent.name} is thinking...
-            </div>
-          )}
         </div>
       )}
     </div>
