@@ -11,8 +11,16 @@
   --paper-dim: #9AA1AD;
   --paper-faint: #69707D;
   --accent: #4F8FB5;
+  /* semantic status colors */
+  --good: #6FA56B;
+  --good-2: #7BC47F;
+  --solid: #9FB36A;
+  --neutral: #9AA1AD;
+  --warn: #C98A3A;
+  --bad: #C2584A;
 }
 
+/* Paper: warm daylight */
 :root[data-theme="light"] {
   --ink: #F5F2EA;
   --ink-2: #FDFCF8;
@@ -22,6 +30,48 @@
   --paper-dim: #4B5362;
   --paper-faint: #878E9C;
   --accent: #3D7EA6;
+  --good: #3E7A44;
+  --good-2: #2E8A4A;
+  --solid: #6E7F2E;
+  --neutral: #6B7280;
+  --warn: #96621C;
+  --bad: #A83A2C;
+}
+
+/* Sepia: old book */
+:root[data-theme="sepia"] {
+  --ink: #F3EADB;
+  --ink-2: #FBF5E9;
+  --ink-3: #E9DCC4;
+  --line: #D5C6A7;
+  --paper: #2E2618;
+  --paper-dim: #5C5240;
+  --paper-faint: #8A7E66;
+  --accent: #8A5A2B;
+  --good: #4E7A35;
+  --good-2: #3E8A3E;
+  --solid: #74722A;
+  --neutral: #7A6F5C;
+  --warn: #96621C;
+  --bad: #A83A2C;
+}
+
+/* Mist: cool gray */
+:root[data-theme="mist"] {
+  --ink: #EEF1F4;
+  --ink-2: #F9FAFC;
+  --ink-3: #E0E6EC;
+  --line: #C9D2DB;
+  --paper: #1E252E;
+  --paper-dim: #4C5763;
+  --paper-faint: #8492A0;
+  --accent: #547C9B;
+  --good: #3E7A50;
+  --good-2: #2E8A55;
+  --solid: #62793A;
+  --neutral: #64748B;
+  --warn: #99671F;
+  --bad: #A63D33;
 }
 
 html,

@@ -38,7 +38,7 @@ function Entry({ entry, opponentName }: { entry: LogEntry; opponentName: string 
             style={{
               color: entry.color,
               border: `1px solid ${entry.color}`,
-              background: `${entry.color}1A`,
+              background: `color-mix(in srgb, ${entry.color} 10%, transparent)`,
             }}
           >
             {entry.label}

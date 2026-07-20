@@ -8,9 +8,9 @@ interface MetersProps {
 }
 
 function standingColor(value: number): string {
-  if (value >= 66) return "#6FA56B";
-  if (value >= 33) return "#C98A3A";
-  return "#C2584A";
+  if (value >= 66) return "var(--good)";
+  if (value >= 33) return "var(--warn)";
+  return "var(--bad)";
 }
 
 function SpringBar({
@@ -60,7 +60,7 @@ export function Meters({ standing, momentum, sceneScore, pop }: MetersProps) {
               key={pop.key}
               className="points-pop pointer-events-none absolute -right-1 top-0 font-mono text-sm font-medium"
               style={{
-                color: pop.points >= 0 ? "#7BC47F" : "#C2584A",
+                color: pop.points >= 0 ? "var(--good-2)" : "var(--bad)",
               }}
             >
               {pop.points >= 0 ? `+${pop.points}` : pop.points}

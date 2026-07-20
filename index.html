@@ -13,8 +13,9 @@
     <script>
       try {
         var p = JSON.parse(localStorage.getItem("closed-door-progress") || "{}");
-        if (p && p.settings && p.settings.theme === "light")
-          document.documentElement.dataset.theme = "light";
+        var t = p && p.settings && p.settings.theme;
+        if (t === "light" || t === "sepia" || t === "mist")
+          document.documentElement.dataset.theme = t;
       } catch (e) {}
     </script>
   </head>

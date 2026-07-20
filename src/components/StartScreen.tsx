@@ -1,6 +1,7 @@
 import { useState } from "react";
 import type { Encounter, Difficulty } from "../game/types";
-import type { Progress } from "../hooks/useProgress";
+import type { Progress, Theme } from "../hooks/useProgress";
+import { THEMES } from "../hooks/useProgress";
 import { Hud } from "./Hud";
 
 interface StartScreenProps {
@@ -9,7 +10,7 @@ interface StartScreenProps {
   dailyEncounterId: string;
   onStart: (encounter: Encounter) => void;
   onDismissIntro: () => void;
-  onSetTheme: (theme: "dark" | "light") => void;
+  onSetTheme: (theme: Theme) => void;
   onSetApiEnabled: (enabled: boolean) => void;
 }
 
@@ -141,13 +142,14 @@ export function StartScreen({
         <div className="mt-2 flex items-center gap-2">
           <button
             type="button"
-            onClick={() =>
-              onSetTheme(progress.settings.theme === "dark" ? "light" : "dark")
-            }
+            onClick={() => {
+              const idx = THEMES.findIndex((t) => t.id === progress.settings.theme);
+              onSetTheme(THEMES[(idx + 1) % THEMES.length].id);
+            }}
             className="rounded-full border border-line px-3 py-1 font-mono text-[10px] uppercase tracking-wide text-paper-faint transition-colors hover:border-paper-faint hover:text-paper-dim"
-            title="Switch theme"
+            title="Cycle theme"
           >
-            {progress.settings.theme === "dark" ? "Light" : "Dark"}
+            {THEMES.find((t) => t.id === progress.settings.theme)?.label ?? "Dark"}
           </button>
           <button
             type="button"
@@ -162,7 +164,34 @@ export function StartScreen({
       {settingsOpen && (
         <div className="mb-6 rounded-lg border border-line bg-ink-2 p-5">
           <h2 className="font-display text-lg text-paper">Settings</h2>
-          <div className="mt-3 flex items-start justify-between gap-4">
+
+          <div className="mt-3">
+            <div className="font-body text-sm text-paper">Theme</div>
+            <div className="mt-2 flex flex-wrap gap-2">
+              {THEMES.map((t) => {
+                const active = progress.settings.theme === t.id;
+                return (
+                  <button
+                    key={t.id}
+                    type="button"
+                    onClick={() => onSetTheme(t.id)}
+                    className="rounded-full border px-3 py-1 font-mono text-[10px] uppercase tracking-wide transition-colors"
+                    style={{
+                      color: active ? "var(--accent)" : "var(--paper-faint)",
+                      borderColor: active ? "var(--accent)" : "var(--line)",
+                      background: active
+                        ? "color-mix(in srgb, var(--accent) 8%, transparent)"
+                        : "transparent",
+                    }}
+                  >
+                    {t.label}
+                  </button>
+                );
+              })}
+            </div>
+          </div>
+
+          <div className="mt-4 flex items-start justify-between gap-4 border-t border-line pt-4">
             <div>
               <div className="font-body text-sm text-paper">Live conversations</div>
               <p className="mt-1 max-w-md font-body text-xs leading-relaxed text-paper-dim">
@@ -254,7 +283,14 @@ export function StartScreen({
                 <div className="flex items-center gap-2">
                   <DifficultyBadge difficulty={enc.difficulty} />
                   {isDaily && !dailyDone && (
-                    <span className="rounded-full bg-amber-500/15 px-2 py-0.5 font-mono text-[10px] uppercase tracking-wide text-amber-400 border border-amber-500/30">
+                    <span
+                      className="rounded-full border px-2 py-0.5 font-mono text-[10px] uppercase tracking-wide"
+                      style={{
+                        color: "var(--warn)",
+                        borderColor: "color-mix(in srgb, var(--warn) 45%, transparent)",
+                        background: "color-mix(in srgb, var(--warn) 12%, transparent)",
+                      }}
+                    >
                       Daily
                     </span>
                   )}
@@ -267,7 +303,7 @@ export function StartScreen({
                 <span
                   className="font-mono text-xs"
                   style={{
-                    color: record ? "#6FA56B" : "var(--paper-faint)",
+                    color: record ? "var(--good)" : "var(--paper-faint)",
                   }}
                 >
                   {!unlocked

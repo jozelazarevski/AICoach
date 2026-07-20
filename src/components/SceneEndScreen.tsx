@@ -23,9 +23,9 @@ const OUTCOME_LABEL: Record<Ending["result"], string> = {
 };
 
 const OUTCOME_COLOR: Record<Ending["result"], string> = {
-  won: "#6FA56B",
-  partial: "#C98A3A",
-  lost: "#C2584A",
+  won: "var(--good)",
+  partial: "var(--warn)",
+  lost: "var(--bad)",
 };
 
 function DebriefTab({
@@ -71,7 +71,7 @@ function DebriefTab({
                   {sc.freeformText}
                 </p>
                 {sc.choicePoints !== 0 && (
-                  <p className="mt-1 font-mono text-xs" style={{ color: sc.choicePoints > 0 ? "#6FA56B" : "#C2584A" }}>
+                  <p className="mt-1 font-mono text-xs" style={{ color: sc.choicePoints > 0 ? "var(--good)" : "var(--bad)" }}>
                     {sc.choicePoints > 0 ? `+${sc.choicePoints}` : sc.choicePoints} pts
                   </p>
                 )}
@@ -91,7 +91,7 @@ function DebriefTab({
                       borderColor: isYours
                         ? "var(--accent)"
                         : isBest && !isYours
-                        ? "#6FA56B44"
+                        ? "color-mix(in srgb, var(--good) 40%, transparent)"
                         : "var(--line)",
                       background: isYours
                         ? "color-mix(in srgb, var(--accent) 8%, var(--ink-2))"
@@ -121,10 +121,10 @@ function DebriefTab({
                           style={{
                             color:
                               choice.points >= 4
-                                ? "#6FA56B"
+                                ? "var(--good)"
                                 : choice.points >= 1
                                 ? "var(--paper-dim)"
-                                : "#C2584A",
+                                : "var(--bad)",
                           }}
                         >
                           {choice.points >= 0 ? `+${choice.points}` : choice.points}
@@ -193,7 +193,7 @@ export function SceneEndScreen({
             <span className="text-paper-faint">No XP</span>
           )}
           {dailyBonus && (
-            <span style={{ color: "#C98A3A" }}>+10 daily</span>
+            <span style={{ color: "var(--warn)" }}>+10 daily</span>
           )}
         </div>
       </div>

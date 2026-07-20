@@ -1,5 +1,14 @@
 import { useCallback, useState } from "react";
 
+export type Theme = "dark" | "light" | "sepia" | "mist";
+
+export const THEMES: { id: Theme; label: string }[] = [
+  { id: "dark", label: "Dark" },
+  { id: "light", label: "Paper" },
+  { id: "sepia", label: "Sepia" },
+  { id: "mist", label: "Mist" },
+];
+
 export interface CompletedRecord {
   bestGrade: string;
   bestScore: number;
@@ -10,7 +19,7 @@ export interface CompletedRecord {
 export interface Progress {
   lifetimeXp: number;
   completed: Record<string, CompletedRecord>;
-  settings: { apiEnabled: boolean; introSeen: boolean; theme: "dark" | "light" };
+  settings: { apiEnabled: boolean; introSeen: boolean; theme: Theme };
   weaknesses: Record<string, number>; // archetype name → loss/partial count
   dailyChallengeDate: string; // ISO date string of last daily completion
 }
@@ -58,7 +67,9 @@ function loadProgress(): Progress {
       settings: {
         apiEnabled: parsed.settings?.apiEnabled ?? false,
         introSeen: parsed.settings?.introSeen ?? false,
-        theme: parsed.settings?.theme === "light" ? "light" : "dark",
+        theme: THEMES.some((t) => t.id === parsed.settings?.theme)
+          ? (parsed.settings!.theme as Theme)
+          : "dark",
       },
       weaknesses: parsed.weaknesses ?? {},
       dailyChallengeDate: parsed.dailyChallengeDate ?? "",
@@ -151,7 +162,7 @@ export function useProgress() {
     });
   }, []);
 
-  const setTheme = useCallback((theme: "dark" | "light") => {
+  const setTheme = useCallback((theme: Theme) => {
     setProgress((prev) => {
       const next: Progress = {
         ...prev,
