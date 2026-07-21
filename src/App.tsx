@@ -7,6 +7,7 @@ import {
   type GameState,
 } from "./game/engine";
 import { rankFor } from "./game/ranks";
+import { setClientApiKey } from "./game/llm";
 import { ENCOUNTERS } from "./content";
 import { useProgress } from "./hooks/useProgress";
 import { StartScreen } from "./components/StartScreen";
@@ -43,7 +44,8 @@ function dailyEncounterId(encounters: Encounter[]): string {
 }
 
 export default function App() {
-  const { progress, updateProgress, setApiEnabled, setTheme, dismissIntro } = useProgress();
+  const { progress, updateProgress, setApiEnabled, setApiKey, setTheme, dismissIntro } =
+    useProgress();
   const [screen, setScreen] = useState<Screen>("start");
   const [encounter, setEncounter] = useState<Encounter | null>(null);
   const [state, setState] = useState<GameState | null>(null);
@@ -62,6 +64,10 @@ export default function App() {
   useEffect(() => {
     document.documentElement.dataset.theme = progress.settings.theme;
   }, [progress.settings.theme]);
+
+  useEffect(() => {
+    setClientApiKey(progress.settings.apiKey);
+  }, [progress.settings.apiKey]);
 
   const dailyId = useMemo(() => dailyEncounterId(ENCOUNTERS), []);
 
@@ -147,6 +153,7 @@ export default function App() {
           onDismissIntro={dismissIntro}
           onSetTheme={setTheme}
           onSetApiEnabled={setApiEnabled}
+          onSetApiKey={setApiKey}
         />
       )}
 

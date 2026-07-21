@@ -12,6 +12,7 @@ interface StartScreenProps {
   onDismissIntro: () => void;
   onSetTheme: (theme: Theme) => void;
   onSetApiEnabled: (enabled: boolean) => void;
+  onSetApiKey: (key: string) => void;
 }
 
 const DIFFICULTY_COLOR: Record<Difficulty, string> = {
@@ -118,9 +119,12 @@ export function StartScreen({
   onDismissIntro,
   onSetTheme,
   onSetApiEnabled,
+  onSetApiKey,
 }: StartScreenProps) {
   const [filter, setFilter] = useState<SettingFilter>("all");
   const [settingsOpen, setSettingsOpen] = useState(false);
+  const [keyDraft, setKeyDraft] = useState(progress.settings.apiKey);
+  const keySaved = keyDraft.trim() === progress.settings.apiKey && keyDraft.trim() !== "";
   const weakness = topWeakness(progress.weaknesses);
   const d = new Date();
   const today = `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, "0")}-${String(d.getDate()).padStart(2, "0")}`;
@@ -195,11 +199,11 @@ export function StartScreen({
             <div>
               <div className="font-body text-sm text-paper">Live conversations</div>
               <p className="mt-1 max-w-md font-body text-xs leading-relaxed text-paper-dim">
-                When on, typing your own words gets a real reply: the opponent
-                answers what you actually said and your line is scored on its
-                merits, not by keyword matching. Requires the game's server to
-                have an AI key configured; if it does not, the game quietly
-                falls back to offline scoring.
+                When on, the opponent becomes a live AI: it answers what you
+                actually said, choice reactions adapt to the conversation, and
+                typed lines are scored on their merits. Needs either an API
+                key pasted below or one configured on the game's server;
+                without one, the game falls back to scripted dialogue.
               </p>
             </div>
             <button
@@ -213,6 +217,46 @@ export function StartScreen({
             >
               {progress.settings.apiEnabled ? "On" : "Off"}
             </button>
+          </div>
+
+          <div className="mt-4 border-t border-line pt-4">
+            <div className="font-body text-sm text-paper">Anthropic API key</div>
+            <p className="mt-1 max-w-md font-body text-xs leading-relaxed text-paper-dim">
+              Paste a key from console.anthropic.com to power live conversations
+              from this browser. It is stored only on this device and sent only
+              to Anthropic. If the game's server has its own key configured,
+              you can leave this empty.
+            </p>
+            <div className="mt-2 flex flex-wrap items-center gap-2">
+              <input
+                type="password"
+                value={keyDraft}
+                onChange={(e) => setKeyDraft(e.target.value)}
+                placeholder="sk-ant-..."
+                autoComplete="off"
+                className="w-64 max-w-full rounded-md border border-line bg-ink px-3 py-2 font-mono text-xs text-paper placeholder:text-paper-faint focus:border-accent focus:outline-none"
+              />
+              <button
+                type="button"
+                onClick={() => onSetApiKey(keyDraft)}
+                className="rounded-md border border-accent px-3 py-2 font-mono text-[10px] uppercase tracking-wide transition-colors hover:bg-accent/10"
+                style={{ color: "var(--accent)" }}
+              >
+                {keySaved ? "Saved" : "Save"}
+              </button>
+              {progress.settings.apiKey && (
+                <button
+                  type="button"
+                  onClick={() => {
+                    setKeyDraft("");
+                    onSetApiKey("");
+                  }}
+                  className="font-mono text-[10px] uppercase tracking-wide text-paper-faint hover:text-paper-dim"
+                >
+                  Remove
+                </button>
+              )}
+            </div>
           </div>
         </div>
       )}

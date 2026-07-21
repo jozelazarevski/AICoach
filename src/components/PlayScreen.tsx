@@ -275,8 +275,8 @@ export function PlayScreen({
         <div className="flex items-start justify-between gap-3 rounded-lg border border-line bg-ink-2 px-4 py-2.5">
           <p className="font-body text-xs leading-relaxed text-paper-dim">
             Live AI is not reachable right now, so the scripted dialogue is
-            playing instead. If you run this game, set ANTHROPIC_API_KEY on the
-            server to turn live conversations on.
+            playing instead. Paste an Anthropic API key in Settings on the
+            start screen, or set ANTHROPIC_API_KEY on the server.
           </p>
           <button
             type="button"

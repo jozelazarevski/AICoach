@@ -22,6 +22,19 @@ export function llmMarkedUnavailable(): boolean {
   return unavailable;
 }
 
+const MODEL = "claude-sonnet-5";
+const MAX_TOKENS = 500;
+
+// Optional bring-your-own-key: when set, the browser talks to the Anthropic
+// API directly and the server proxy is not needed. The key lives only in the
+// player's localStorage.
+let clientKey = "";
+
+export function setClientApiKey(key: string) {
+  clientKey = key.trim();
+  if (clientKey) unavailable = false;
+}
+
 function clampInt(v: unknown, min: number, max: number, fallback: number): number {
   const n = typeof v === "number" ? Math.round(v) : NaN;
   if (Number.isNaN(n)) return fallback;
@@ -45,29 +58,56 @@ function persona(encounter: Encounter): string {
 }
 
 async function callLlm(system: string, user: string): Promise<string> {
-  if (unavailable) throw new Error("llm unavailable");
+  if (!clientKey && unavailable) throw new Error("llm unavailable");
 
   const controller = new AbortController();
   const timer = setTimeout(() => controller.abort(), 12000);
 
   let resp: Response;
   try {
-    resp = await fetch("/api/llm", {
-      method: "POST",
-      headers: { "content-type": "application/json" },
-      body: JSON.stringify({ system, messages: [{ role: "user", content: user }] }),
-      signal: controller.signal,
-    });
+    if (clientKey) {
+      // Direct browser call with the player's own key.
+      resp = await fetch("https://api.anthropic.com/v1/messages", {
+        method: "POST",
+        headers: {
+          "content-type": "application/json",
+          "x-api-key": clientKey,
+          "anthropic-version": "2023-06-01",
+          "anthropic-dangerous-direct-browser-access": "true",
+        },
+        body: JSON.stringify({
+          model: MODEL,
+          max_tokens: MAX_TOKENS,
+          system,
+          messages: [{ role: "user", content: user }],
+        }),
+        signal: controller.signal,
+      });
+    } else {
+      resp = await fetch("/api/llm", {
+        method: "POST",
+        headers: { "content-type": "application/json" },
+        body: JSON.stringify({ system, messages: [{ role: "user", content: user }] }),
+        signal: controller.signal,
+      });
+    }
   } finally {
     clearTimeout(timer);
   }
 
-  if (resp.status === 503 || resp.status === 404 || resp.status === 405) {
+  if (!clientKey && (resp.status === 503 || resp.status === 404 || resp.status === 405)) {
     unavailable = true;
     throw new Error("llm not configured");
   }
   if (!resp.ok) throw new Error(`llm error ${resp.status}`);
 
+  if (clientKey) {
+    const data = (await resp.json()) as { content?: { type: string; text?: string }[] };
+    return (data.content ?? [])
+      .filter((b) => b.type === "text")
+      .map((b) => b.text ?? "")
+      .join("");
+  }
   const { text } = (await resp.json()) as { text: string };
   return text;
 }

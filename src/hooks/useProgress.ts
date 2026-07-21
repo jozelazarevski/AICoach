@@ -20,7 +20,7 @@ export interface CompletedRecord {
 export interface Progress {
   lifetimeXp: number;
   completed: Record<string, CompletedRecord>;
-  settings: { apiEnabled: boolean; introSeen: boolean; theme: Theme };
+  settings: { apiEnabled: boolean; introSeen: boolean; theme: Theme; apiKey: string };
   weaknesses: Record<string, number>; // archetype name → loss/partial count
   dailyChallengeDate: string; // ISO date string of last daily completion
 }
@@ -30,7 +30,7 @@ const STORAGE_KEY = "closed-door-progress";
 const DEFAULT_PROGRESS: Progress = {
   lifetimeXp: 0,
   completed: {},
-  settings: { apiEnabled: false, introSeen: false, theme: "light" },
+  settings: { apiEnabled: false, introSeen: false, theme: "light", apiKey: "" },
   weaknesses: {},
   dailyChallengeDate: "",
 };
@@ -55,6 +55,8 @@ function loadProgress(): Progress {
         theme: THEMES.some((t) => t.id === parsed.settings?.theme)
           ? (parsed.settings!.theme as Theme)
           : "light",
+        apiKey:
+          typeof parsed.settings?.apiKey === "string" ? parsed.settings.apiKey : "",
       },
       weaknesses: parsed.weaknesses ?? {},
       dailyChallengeDate: parsed.dailyChallengeDate ?? "",
@@ -147,6 +149,23 @@ export function useProgress() {
     });
   }, []);
 
+  const setApiKey = useCallback((apiKey: string) => {
+    setProgress((prev) => {
+      const trimmed = apiKey.trim();
+      const next: Progress = {
+        ...prev,
+        settings: {
+          ...prev.settings,
+          apiKey: trimmed,
+          // Pasting a key implies wanting live conversations on.
+          apiEnabled: trimmed ? true : prev.settings.apiEnabled,
+        },
+      };
+      save(next);
+      return next;
+    });
+  }, []);
+
   const setTheme = useCallback((theme: Theme) => {
     setProgress((prev) => {
       const next: Progress = {
@@ -175,5 +194,5 @@ export function useProgress() {
     setProgress(next);
   }, []);
 
-  return { progress, updateProgress, setApiEnabled, setTheme, dismissIntro, resetProgress };
+  return { progress, updateProgress, setApiEnabled, setApiKey, setTheme, dismissIntro, resetProgress };
 }
