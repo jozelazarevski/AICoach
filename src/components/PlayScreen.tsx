@@ -53,6 +53,15 @@ export function PlayScreen({
   const touchStartX = useRef(0);
   const touchStartY = useRef(0);
   const pendingRef = useRef<HTMLDivElement>(null);
+  // Guards against applying a turn after the player left mid-LLM-call.
+  const alive = useRef(true);
+
+  useEffect(() => {
+    alive.current = true;
+    return () => {
+      alive.current = false;
+    };
+  }, []);
 
   useEffect(() => {
     if (pending) {
@@ -80,13 +89,16 @@ export function PlayScreen({
         overrides = { reaction: turn.reaction, nextPrompt: turn.nextPrompt };
       } catch {
         overrides = undefined; // fall back to scripted dialogue
-        setAiFallback(true);
+        if (alive.current) setAiFallback(true);
       } finally {
-        setThinking(false);
-        setPending(null);
+        if (alive.current) {
+          setThinking(false);
+          setPending(null);
+        }
       }
     }
 
+    if (!alive.current) return; // player left this conversation mid-call
     triggerPop(choice.points);
     playVerdict(choice.points);
     const next = applyChoice(encounter, state, choice, overrides);
@@ -104,23 +116,16 @@ export function PlayScreen({
       setThinking(true);
       setPending(text);
       try {
-        // Peek with a neutral probe first; re-peek with real deltas after judging.
+        // A freeform line never branches, so the candidate next beat is
+        // simply the following stage (deltas are checked after judging).
+        const candidate = encounter.stages[state.stageIndex + 1];
         const judged = await llmJudgeLine(
           encounter,
           stage,
           resolvePrompt(stage, state),
           state,
           text,
-          peekNextTurn(encounter, state, {
-            id: "probe",
-            tag: "",
-            line: "",
-            points: 0,
-            standing: 0,
-            momentum: 0,
-            reaction: "",
-            principle: "",
-          })?.prompt ?? null
+          candidate ? resolvePrompt(candidate, state) : null
         );
         synthetic = {
           id: "freeform",
@@ -139,7 +144,7 @@ export function PlayScreen({
           nextPrompt: realNext ? judged.nextPrompt : undefined,
         };
       } catch {
-        setAiFallback(true);
+        if (alive.current) setAiFallback(true);
         const result = resolveFreeform(text, stage, state, { apiEnabled });
         synthetic = {
           id: "freeform",
@@ -152,8 +157,10 @@ export function PlayScreen({
           principle: result.principle,
         };
       } finally {
-        setThinking(false);
-        setPending(null);
+        if (alive.current) {
+          setThinking(false);
+          setPending(null);
+        }
       }
     } else {
       const result = resolveFreeform(text, stage, state, { apiEnabled });
@@ -169,6 +176,7 @@ export function PlayScreen({
       };
     }
 
+    if (!alive.current) return; // player left this conversation mid-call
     triggerPop(synthetic.points);
     playVerdict(synthetic.points);
     const next = applyChoice(encounter, state, synthetic, overrides);
