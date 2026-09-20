@@ -63,6 +63,33 @@ Every finding quotes the span of the passage that caused it. A weak draft can
 trip every rule at once, so findings are capped and ordered by the dimensions
 that scored worst, weighted toward whatever the current lesson teaches.
 
+### Worked examples
+
+Every writing drill ships three or four worked answers, each from a different
+situation, with one line on what to notice in it. They are reachable from the
+drill behind a "Stuck on the blank page?" panel, and while the editor is still
+empty any of them can be loaded in as a starting point to rewrite.
+
+`examples.test.ts` scores every example with the app's own analyzer and fails
+the build if one does not clear the bar the drill is teaching: at least 70
+overall against that drill's target dimensions, past its minimum length, and
+clean on economy. The device claims are checked too — the drumbeat examples
+must actually contain anaphora, the turn examples an antithesis, the rhythm
+examples a sharp spread of sentence lengths, the camera examples no
+abstractions.
+
+That gate caught more in the analyzer than in the prose. Anaphora and matched
+antithesis frames are deliberately parallel, and the rhythm scorer was marking
+them down as monotone — penalizing a writer for doing exactly what the lesson
+asked. Scoring now recognizes deliberate parallelism and leaves it alone.
+Anaphora needs three consecutive sentences rather than two, as the lesson
+itself says ("two is a stutter"), which also stops an accidental echo excusing
+a real monotone; single-word anaphora ("Nobody… Nobody… Nobody…") is detected,
+excluding articles; the turn is recognized in its commonest form, "This is not
+X. It is Y.", which the trainer's own scaffold builds and the detector
+previously missed; and the concrete and charged vocabularies were too narrow to
+reward plain specific writing.
+
 ### Which lines are already working
 
 `rankPhrases` scores every sentence against the others in the draft and ranks

@@ -102,6 +102,19 @@ export const CONCRETE_WORDS = new Set([
   "january", "february", "march", "april", "may", "june", "july", "august",
   "september", "october", "november", "december", "morning", "midnight",
   "afternoon", "evening", "night",
+  // Everyday places, objects and people a listener can picture. The list was
+  // too narrow to reward writing that is genuinely specific.
+  "hospital", "surgery", "doctor", "nurse", "ward", "bed", "ticket", "receipt",
+  "invoice", "van", "bonnet", "yard", "garage", "fleece", "jacket", "kit",
+  "boots", "corridor", "staircase", "step", "porch", "gate", "fence", "garden",
+  "engine", "lobby", "lift", "badge", "guard", "sandwich", "lunch", "dinner",
+  "breakfast", "kettle", "jar", "tin", "photo", "photograph", "calendar",
+  "invite", "spreadsheet", "whiteboard", "folder", "shelf", "drawer", "bin",
+  "counter", "till", "shop", "pub", "church", "school", "classroom", "playground",
+  "pitch", "court", "gym", "platform", "ferry", "bike", "helmet", "wallet",
+  "purse", "coin", "note", "stamp", "postcard", "suitcase", "rucksack",
+  "sofa", "curtain", "carpet", "ceiling", "roof", "brick", "nail", "hammer",
+  "ladder", "bucket", "rope", "boot", "sock", "shirt", "button", "zip",
 ]);
 
 // Charge: words with temperature. Not the words that announce emotion, the
@@ -117,6 +130,14 @@ const CHARGED_WORDS = new Set([
   "hold", "held", "carry", "carried", "give", "gave", "take", "took", "stand",
   "stood", "walk", "walked", "run", "ran", "stop", "stopped", "buried",
   "beg", "begged", "sworn", "swear", "dead", "died", "die", "born", "alive",
+  // Words that carry weight in ordinary speech about work and family. Without
+  // these, plain honest writing scored as though it had no temperature at all.
+  "cut", "fired", "sacked", "resigned", "resign", "quitting", "cancelled",
+  "canceled", "cancelling", "missed", "forgot", "forgotten", "ignored",
+  "admit", "admitted", "fail", "failed", "failing", "sorry", "apologised",
+  "apologized", "packed", "leaving", "leave", "told", "warned", "asked",
+  "refused", "chose", "choose", "owed", "owe", "paid", "borrowed", "signed",
+  "cover", "covered", "carried", "kept", "keep", "lose", "won", "win",
 ]);
 
 // Emotion announced instead of shown. Not banned — just usually a sign the
@@ -276,6 +297,8 @@ export interface DeviceReport {
   images: string[];
 }
 
+const WEAK_OPENINGS = new Set(["the", "a", "an", "it", "this", "that", "there", "and", "but", "so", "then"]);
+
 function openingKey(s: Sentence, n: number): string {
   return s.words.slice(0, n).join(" ");
 }
@@ -286,7 +309,7 @@ export function detectDevices(sentences: Sentence[], lower: string): DeviceRepor
   const tricolon: string[] = [];
   const antithesis: string[] = [];
 
-  // Anaphora: two or more consecutive sentences opening on the same two words.
+  // Anaphora on a two-word opening ("They told…"), needing two in a row.
   let run: string[] = [];
   let runKey = "";
   for (const s of sentences) {
@@ -294,12 +317,30 @@ export function detectDevices(sentences: Sentence[], lower: string): DeviceRepor
     if (key && key === runKey && s.words.length > 2) {
       run.push(s.text);
     } else {
-      if (run.length >= 2 && runKey) anaphora.push(runKey);
+      if (run.length >= 3 && runKey) anaphora.push(runKey);
       runKey = key;
       run = [s.text];
     }
   }
-  if (run.length >= 2 && runKey) anaphora.push(runKey);
+  if (run.length >= 3 && runKey) anaphora.push(runKey);
+
+  // Anaphora on a single word ("Nobody… Nobody… Nobody…") is just as real, but
+  // needs three in a row to tell it apart from three sentences that happen to
+  // start with the same article.
+  let singleRun = 0;
+  let singleKey = "";
+  for (let i = 0; i <= sentences.length; i++) {
+    const key = i < sentences.length ? openingKey(sentences[i], 1) : "";
+    if (key && key === singleKey) {
+      singleRun++;
+      continue;
+    }
+    if (singleRun >= 3 && singleKey && !WEAK_OPENINGS.has(singleKey) && !anaphora.includes(singleKey)) {
+      anaphora.push(singleKey);
+    }
+    singleKey = key;
+    singleRun = 1;
+  }
 
   // Epistrophe: consecutive sentences closing on the same two words.
   for (let i = 1; i < sentences.length; i++) {
@@ -325,12 +366,24 @@ export function detectDevices(sentences: Sentence[], lower: string): DeviceRepor
   const negatedFrame = (s: Sentence) =>
     s.words.slice(0, 4).some((w) => w === "not" || w === "never" || w === "no");
 
+  // "This is not a price problem. It is a trust problem." is the same turn with
+  // the pronoun swapped, so matching on an identical opening alone misses the
+  // commonest form of it — including the one the trainer's own scaffold builds.
+  const copulaEarly = (s: Sentence) =>
+    s.words.slice(0, 3).some((w) => w === "is" || w === "are" || w === "was" || w === "were");
+
   for (let i = 1; i < sentences.length; i++) {
     const prev = sentences[i - 1];
     const cur = sentences[i];
     const sameOpening =
       openingKey(prev, 2) && openingKey(prev, 2) === openingKey(cur, 2);
-    if (sameOpening && negatedFrame(prev) && !negatedFrame(cur) && !antithesis.includes(cur.text)) {
+    const swappedFrame = copulaEarly(prev) && copulaEarly(cur);
+    if (
+      (sameOpening || swappedFrame) &&
+      negatedFrame(prev) &&
+      !negatedFrame(cur) &&
+      !antithesis.includes(cur.text)
+    ) {
       antithesis.push(cur.text);
     }
   }
@@ -380,7 +433,7 @@ function scoreConcrete(words: string[], raw: string): { score: number; abstractH
   return { score, abstractHits, concreteHits };
 }
 
-function scoreRhythm(sentences: Sentence[]): number {
+function scoreRhythm(sentences: Sentence[], parallel = false): number {
   if (sentences.length === 0) return 0;
   if (sentences.length === 1) {
     // One sentence has no rhythm to speak of; a short one at least lands.
@@ -402,18 +455,23 @@ function scoreRhythm(sentences: Sentence[]): number {
   const allShort = lengths.every((n) => n <= 7);
   if (allShort && lengths.length > 2) score = Math.min(score, 55);
 
+  // A drumbeat and a matched turn are deliberately parallel: their sentences
+  // are meant to be the same shape. Scoring that as monotone marks a writer
+  // down for doing exactly what the lesson asked.
+  if (parallel) score = Math.max(score, 68);
+
   return clamp(score);
 }
 
 function scoreDevices(devices: DeviceReport, sentenceCount: number): number {
   let score = 0;
-  score += Math.min(devices.anaphora.length, 2) * 30;
-  score += Math.min(devices.epistrophe.length, 1) * 24;
-  score += Math.min(devices.tricolon.length, 2) * 20;
-  score += Math.min(devices.antithesis.length, 2) * 24;
-  score += Math.min(devices.questions, 1) * 10;
-  score += devices.address > 0 ? 8 : 0;
-  score += Math.min(devices.images.length, 1) * 12;
+  score += Math.min(devices.anaphora.length, 2) * 45;
+  score += Math.min(devices.epistrophe.length, 1) * 35;
+  score += Math.min(devices.tricolon.length, 2) * 30;
+  score += Math.min(devices.antithesis.length, 2) * 40;
+  score += Math.min(devices.questions, 1) * 12;
+  score += devices.address > 0 ? 10 : 0;
+  score += Math.min(devices.images.length, 1) * 15;
 
   // A single sentence cannot carry structural devices; do not punish it to zero.
   if (sentenceCount <= 1) score = Math.max(score, 25);
@@ -547,7 +605,9 @@ function buildFindings(
 
   // --- rhythm
   const lengths = sentences.map((s) => s.words.length);
-  if (sentences.length >= 3 && stats.sentenceWordSd < 4) {
+  const parallel =
+    devices.anaphora.length > 0 || devices.antithesis.length > 0 || devices.epistrophe.length > 0;
+  if (sentences.length >= 3 && stats.sentenceWordSd < 4 && !parallel) {
     findings.push({
       kind: "fix",
       dimension: "rhythm",
@@ -565,7 +625,7 @@ function buildFindings(
       note: "You built and then dropped. That short line carries more than the long ones around it.",
     });
   }
-  const flaggedMonotone = sentences.length >= 3 && stats.sentenceWordSd < 4;
+  const flaggedMonotone = sentences.length >= 3 && stats.sentenceWordSd < 4 && !parallel;
   if (sentences.length >= 3 && !flaggedMonotone && !lengths.some((n) => n <= 6)) {
     findings.push({
       kind: "fix",
@@ -740,8 +800,9 @@ export function analyze(input: string, targets: Dimension[] = []): Analysis {
   }
 
   const concrete = scoreConcrete(words, raw);
-  const rhythm = scoreRhythm(sentences);
   const devices = detectDevices(sentences, lower);
+  const parallel = devices.anaphora.length > 0 || devices.antithesis.length > 0 || devices.epistrophe.length > 0;
+  const rhythm = scoreRhythm(sentences, parallel);
   const deviceScore = scoreDevices(devices, sentences.length);
   const charge = scoreCharge(words);
   const economy = scoreEconomy(words, lower, raw);
@@ -905,21 +966,25 @@ function devicesPerSentence(sentences: Sentence[]): PhraseDevices[] {
   }));
 
   // A repetition device belongs to every line in the run, not just the last.
-  const markRuns = (key: (s: Sentence) => string, field: "drumbeat" | "epistrophe") => {
+  const markRuns = (
+    key: (s: Sentence) => string,
+    field: "drumbeat" | "epistrophe",
+    minRun: number
+  ) => {
     let start = 0;
     for (let i = 1; i <= sentences.length; i++) {
       const same =
         i < sentences.length && key(sentences[i]) !== "" && key(sentences[i]) === key(sentences[start]);
       if (same) continue;
-      if (i - start >= 2) {
+      if (i - start >= minRun) {
         for (let j = start; j < i; j++) tags[j][field] = true;
       }
       start = i;
     }
   };
 
-  markRuns((s) => s.words.slice(0, 2).join(" "), "drumbeat");
-  markRuns((s) => s.words.slice(-2).join(" "), "epistrophe");
+  markRuns((s) => s.words.slice(0, 2).join(" "), "drumbeat", 3);
+  markRuns((s) => s.words.slice(-2).join(" "), "epistrophe", 2);
 
   // A matched frame answering a negated one is a turn across two lines.
   for (let i = 1; i < sentences.length; i++) {

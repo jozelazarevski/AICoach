@@ -37,6 +37,36 @@ export const LESSONS: Lesson[] = [
         coachNote:
           "Check your draft for the words impact, situation, challenges, issues, and process. Each one is a place where you flinched away from the thing itself.",
         minWords: 45,
+        examples: [
+          {
+            context: "A layoff you signed off on",
+            passage:
+              "In March I cut eleven people from a team of forty. Priya found out from a calendar invite that appeared at 7:40 on a Tuesday, fourteen minutes before it started. She had renewed her lease in January because I told her the work was funded. She packed a keyboard, a photo of her daughter, and a jar of instant coffee into a box that still had someone else's name on the side. I walked her to the lobby and neither of us said anything in the lift.",
+            notice:
+              "Nothing here says difficult or painful. The jar of coffee and the silence in the lift do all of it.",
+          },
+          {
+            context: "A promise you broke at home",
+            passage:
+              "I told my brother I would be at the hospital by six. I got there at nine because I took a call in the car park and then took another one. He had already spoken to the doctor alone. When I came in he was holding the parking ticket he had bought for me. He put it on the bed and said nothing about it. The ticket had expired at eight.",
+            notice:
+              "The whole betrayal is a parking ticket on a bed. No adjective could carry it better.",
+          },
+          {
+            context: "Letting someone go in a small business",
+            passage:
+              "I let Marek go three days before Christmas because the van broke down and I could not pay two wages. He had worked Saturdays all year without once asking me for more. I told him in the yard, standing next to the van, with the bonnet still open. He asked if he could keep the fleece with our name on it. I said yes. He folded it over his arm and walked to the bus stop.",
+            notice:
+              "The bonnet is still open while it happens. Small physical facts are what make a room believe you.",
+          },
+          {
+            context: "A decision you made as a coach or teacher",
+            passage:
+              "I cut Amara from the squad on a Thursday. I did it in the corridor between lessons because I had somewhere to be at four and wanted it over with. She had come in at seven every morning since September. She said okay twice, and then asked whether she could keep her kit. Her mother was waiting outside with the engine running.",
+            notice:
+              "The engine running outside tells you what the walk to the car was like, without describing it.",
+          },
+        ],
       },
       {
         id: "camera-rewrite",
@@ -50,6 +80,29 @@ export const LESSONS: Lesson[] = [
         coachNote:
           "The original hides the speaker. Notice how much harder it is to write the honest version — that difficulty is the whole point.",
         minWords: 35,
+        examples: [
+          {
+            context: "Say the number and own the list",
+            passage:
+              "We are letting forty-one people go on the fourteenth. I signed off on the list myself. Some of you will hear it from a calendar invite before you hear it from me, and I am sorry for that. Everyone on that list gets three months and a reference I will write by hand.",
+            notice:
+              "The original hid the speaker entirely. This one puts a person behind every verb.",
+          },
+          {
+            context: "Admit where the list came from",
+            passage:
+              "Forty-one of you are losing your jobs next month. I made the list on a Sunday at my kitchen table, and I had four of the names wrong before I had them right. You will get a call before Friday. I will be on the third floor all week if you would rather hear it from me.",
+            notice:
+              "The kitchen table is the whole difference between a memo and a person talking.",
+          },
+          {
+            context: "Put the cause in front",
+            passage:
+              "We ran out of money in October and I did not tell you until today. Forty-one people are leaving. I will read every name out myself on Thursday rather than let anyone find their own on a spreadsheet.",
+            notice:
+              "Shorter than the original and says more, because none of it is hiding.",
+          },
+        ],
       },
     ],
   },
@@ -85,6 +138,29 @@ export const LESSONS: Lesson[] = [
         coachNote:
           "If you used more than one image, cut the weaker one. Two pictures halve each other.",
         minWords: 35,
+        examples: [
+          {
+            context: "A stretch at work",
+            passage:
+              "That autumn I learned which step on our staircase creaks at three in the morning, because I was on it most nights between September and December waiting for the kettle. We shipped on the fourteenth of November. On the fifteenth nobody in the building mentioned it. Nobody has since.",
+            notice:
+              "One picture, then plain facts. The creaking step is the only image and it carries the rest.",
+          },
+          {
+            context: "A team running out",
+            passage:
+              "By November the team was eating lunch at their desks with the lids still on. Nobody booked the Friday meeting any more. Two people left in December and we did not replace them. I stopped asking how the weekend had gone.",
+            notice:
+              "Lids still on. Four words, and you can see the whole month.",
+          },
+          {
+            context: "A season at home",
+            passage:
+              "The spring my father was ill, I drove the same ninety minutes twice a week for four months. He never once asked me to come. He never once said thank you. In April he started leaving the porch light on.",
+            notice:
+              "The light is the only image, and it arrives last. Notice it is never explained.",
+          },
+        ],
       },
     ],
   },
@@ -121,6 +197,29 @@ export const LESSONS: Lesson[] = [
         coachNote:
           "Reread it looking for the word \"we\" where the honest word is \"I.\" Diffusing blame across a group is the most common way to un-earn an admission.",
         minWords: 55,
+        examples: [
+          {
+            context: "A decision you argued for and got wrong",
+            passage:
+              "I pushed this reorg through in January. Two people told me it would break the on-call rota and I told them they were being territorial. They were not being territorial. They were right. Priya covered eleven weekends between February and June. She asked me twice for help and both times I said it would settle down. It did not settle down. She resigned on a Monday and I found out from her calendar.",
+            notice:
+              "Every sentence costs the speaker something. That is what makes the last one land instead of sounding like a script.",
+          },
+          {
+            context: "A promise at home",
+            passage:
+              "I promised I would be at both games and I went to neither. I told myself it was the quarter close, and the quarter close was real, but I have been to four leaving drinks since September and none of his matches. He stopped asking whether I was coming in the third week of October. I only noticed in December.",
+            notice:
+              "The admission is precise: not I have been busy, but four leaving drinks and no matches.",
+          },
+          {
+            context: "A number you got wrong",
+            passage:
+              "I priced the job at nine thousand because I wanted to win it. It cost eleven. I paid the difference out of the money set aside for Marek's van, and then I told Marek the van would have to wait another year. He did not complain. He has not asked about the van since March, and the silence is worse than complaining would have been.",
+            notice:
+              "Admitted cost, in pounds and in somebody else's year. No apology anywhere in it.",
+          },
+        ],
       },
       {
         id: "stakes-speak",
@@ -171,6 +270,29 @@ export const LESSONS: Lesson[] = [
         coachNote:
           "The target shape is something like 24 words, 18 words, 3 words. Write the numbers down and check yourself.",
         minWords: 30,
+        examples: [
+          {
+            context: "Build across two, land on three words",
+            passage:
+              "For seven months we have thrown everything we have at this: three rewrites, two consultants, and a room upstairs that ran until nine most nights. We tried every version of the plan any of us could think of. None of it moved the number. We were wrong.",
+            notice:
+              "Roughly 30, 14, 6, 3 words. Write the lengths in the margin and you can see the shape.",
+          },
+          {
+            context: "Same shape, plainer words",
+            passage:
+              "We have spent since February trying five different fixes, and the last of them shipped in August with exactly the result the first one had. Nothing has moved. We need a different idea.",
+            notice:
+              "The long sentence carries the evidence so the short ones can carry the verdict.",
+          },
+          {
+            context: "Open with the tally",
+            passage:
+              "Eleven months, four approaches, two teams, and a graph that has not moved a millimetre since the spring. We keep shipping variations of the same idea and calling them new. The idea is wrong.",
+            notice:
+              "A list can do the building, so long as something short arrives after it.",
+          },
+        ],
       },
       {
         id: "rhythm-write",
@@ -182,6 +304,29 @@ export const LESSONS: Lesson[] = [
         coachNote:
           "Variance is the score here, not brevity. A passage of all-short sentences scores no better than a passage of all-long ones.",
         minWords: 45,
+        examples: [
+          {
+            context: "Making a case at work",
+            passage:
+              "We should stop chasing enterprise, and spend the next year on the three hundred small shops who already pay us, renew without a phone call, and tell each other about us for free. Enterprise took eleven months and two discounts to close. The shops take a week. Our best quarter came from one shop owner in Leeds who told six other shop owners. Stop chasing logos.",
+            notice:
+              "The 38-word opener earns the three-word ending, and they are nowhere near each other.",
+          },
+          {
+            context: "A decision at home",
+            passage:
+              "I want to sell the car. Between the road tax, the two hundred a month to keep it outside a house we both leave on foot, and the four times we drove it last year, it is a room we rent for nothing. We would walk more. We would argue about parking less. It goes.",
+            notice:
+              "Two short sentences in the middle give the room somewhere to breathe before the drop.",
+          },
+          {
+            context: "A case to a committee",
+            passage:
+              "Every objection raised last night came down to one worry, that a bus every twenty minutes brings people through the village who have no reason to stop in it. Those people already drive through, at fifty, past the school gate. They do not see us. A bus would.",
+            notice:
+              "Long, then three short lines of decreasing length. The last one is three words and it is the argument.",
+          },
+        ],
       },
     ],
   },
@@ -219,6 +364,29 @@ export const LESSONS: Lesson[] = [
         coachNote:
           "The fourth sentence is where the drill is won. The repetition sets an expectation only so that breaking it means something.",
         minWords: 40,
+        examples: [
+          {
+            context: "What you were refused",
+            passage:
+              "They told us there was no money for it. They told us there were no people for it. They told us to wait until January and ask again. We built it anyway, on a kitchen table, with two of us and a borrowed laptop.",
+            notice:
+              "The third repetition is the shortest, and the fourth line does not use the phrase at all.",
+          },
+          {
+            context: "Earning the right to object",
+            passage:
+              "I have sat in that chair. I have made that exact call. I have been wrong about it in exactly the way you are about to be. So when I tell you this will not work, I am not guessing.",
+            notice:
+              "Repetition here is not decoration, it is credentials. Each one buys the last sentence more weight.",
+          },
+          {
+            context: "How something was allowed to happen",
+            passage:
+              "Nobody wrote it down in October. Nobody asked who owned it in November. Nobody said no in December, and by January it had a budget line and two contractors on it. That is how we got here. It cost us eleven months, and not one person chose it.",
+            notice:
+              "Twenty words in total. The drumbeat does not need length, it needs the same opening three times.",
+          },
+        ],
       },
       {
         id: "drumbeat-speak",
@@ -267,6 +435,29 @@ export const LESSONS: Lesson[] = [
         coachNote:
           "Notice which item you kept last. If it is not the one that costs the most to say, you cut the wrong ones.",
         minWords: 25,
+        examples: [
+          {
+            context: "Ordered by what it costs to say",
+            passage:
+              "I will not pretend this is cheap. Getting it right takes sharper tools, four more people, and saying out loud that the design we sold you was drawn by me and it was wrong. That last one is free. It is also the hard one.",
+            notice:
+              "Tools, people, admission. Each item is heavier than the one before, and the last one is the real subject.",
+          },
+          {
+            context: "The same three as a drumbeat",
+            passage:
+              "It will cost us money. It will cost us most of a year. It will cost us the story we have been telling ourselves since the launch in March. I would still sign it today.",
+            notice:
+              "Three sentences instead of one list. Same order, more room, and the last one is twice the length of the first.",
+          },
+          {
+            context: "Plain and short",
+            passage:
+              "We need sharper tools, four more people on the floor, and somebody willing to say the first drawing was wrong. Two of those I can buy this month. The third one is mine. I have been avoiding it since March.",
+            notice:
+              "Notice what happens after the three: the list sets up a line that would mean nothing on its own.",
+          },
+        ],
       },
     ],
   },
@@ -302,6 +493,29 @@ export const LESSONS: Lesson[] = [
         coachNote:
           "Read your turn aloud. If the two halves do not have nearly the same rhythm, tighten the second until they do.",
         minWords: 40,
+        examples: [
+          {
+            context: "Killing the assumption at work",
+            passage:
+              "Everyone in this room believes we are behind because we are short of people. We hired nine engineers last year, and I signed every one of those offers myself. Four of them are still waiting for somebody to tell them what to build. One asked me in March and I have not answered. We are not behind because we lack people. We are behind because we do not agree.",
+            notice:
+              "The turn arrives last, after the evidence. Both halves use the same eight-word frame.",
+          },
+          {
+            context: "A pricing argument",
+            passage:
+              "You have been told this is a pricing problem. We dropped the price twice in eighteen months. Both times the same customers left in the same month, and they left for a product that costs more than ours. This is not a price problem. It is a trust problem.",
+            notice:
+              "Two matched frames, one word changed. The hedging disappears because the structure carries the claim.",
+          },
+          {
+            context: "A community meeting",
+            passage:
+              "The council keeps calling this a parking issue. Nobody at last month's meeting mentioned a car. They talked about the bus that stopped in April, and the walk to the surgery, and Mrs Doyle waiting forty minutes in the rain with her shopping. This is not about where we leave our cars. It is about how we reach a doctor.",
+            notice:
+              "Build, then turn. The second half is shorter than the first, which is what makes it land.",
+          },
+        ],
       },
     ],
   },
@@ -426,6 +640,29 @@ export const LESSONS: Lesson[] = [
         coachNote:
           "Read only your final sentence to someone. If they cannot tell what the speech was about from that one line, it is not a landing.",
         minWords: 40,
+        examples: [
+          {
+            context: "Ending on one commitment",
+            passage:
+              "So here is what happens next. I am cancelling both of the projects I announced in January, and I am not replacing them with three new ones. Priya's team goes back to a single thing. In six weeks I will stand here and tell you whether it worked, with the numbers on the screen behind me. Next quarter we do one thing. I will not ask you for a second.",
+            notice:
+              "No thanks, no next steps, no in conclusion. It ends on a promise that costs the speaker something.",
+          },
+          {
+            context: "Taking the worst of it yourself",
+            passage:
+              "We are not going to talk about culture again this year. On Monday the on-call rota goes to eight people instead of four. I will take a week of it myself, and I am taking the one over Christmas. If it is still broken in March you will hear that from me before you hear it from anybody else. I am taking Christmas.",
+            notice:
+              "The callback does the closing. The last line repeats something from four sentences earlier and never explains why.",
+          },
+          {
+            context: "Ending an apology",
+            passage:
+              "I have asked you for a great deal this year and most of it did not work. I am not going to ask you for more time. The deadline moves to June, the scope halves tonight, and I will tell the board myself on Thursday morning. You will not hear it from them first. I own this one.",
+            notice:
+              "Four words, a heavy last noun, and a commitment rather than a summary of what was covered.",
+          },
+        ],
       },
       {
         id: "landing-speak",

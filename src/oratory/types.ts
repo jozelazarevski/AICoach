@@ -77,6 +77,15 @@ export interface TextStats {
   spokenSeconds: number;
 }
 
+/** A worked answer, so nobody has to start a drill from a blank page. */
+export interface DrillExample {
+  /** The situation, so a writer can find one near their own. */
+  context: string;
+  passage: string;
+  /** What to notice in it — one line, pointing at the technique. */
+  notice: string;
+}
+
 export type DrillKind = "write" | "rewrite" | "speak";
 
 export interface Drill {
@@ -94,6 +103,8 @@ export interface Drill {
   /** Shown after an attempt, whatever the score. */
   coachNote: string;
   minWords: number;
+  /** Worked answers for the drill, shown on request. */
+  examples?: DrillExample[];
 }
 
 export interface Lesson {

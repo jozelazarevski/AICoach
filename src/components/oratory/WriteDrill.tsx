@@ -1,6 +1,7 @@
 import { useEffect, useMemo, useRef, useState } from "react";
 import type { Drill, Lesson } from "../../oratory/types";
 import { analyze, splitSentences } from "../../oratory/analyze";
+import { Examples } from "./Examples";
 
 interface WriteDrillProps {
   lesson: Lesson;
@@ -131,6 +132,16 @@ export function WriteDrill({
       <div className="mt-4">
         <LiveShape text={text} />
       </div>
+
+      <Examples
+        drill={drill}
+        editorEmpty={text.trim().length === 0}
+        onUseAsStart={(passage) => {
+          setText(passage);
+          areaRef.current?.focus();
+          areaRef.current?.scrollIntoView({ behavior: "smooth", block: "center" });
+        }}
+      />
     </div>
   );
 }
