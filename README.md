@@ -63,6 +63,36 @@ Every finding quotes the span of the passage that caused it. A weak draft can
 trip every rule at once, so findings are capped and ordered by the dimensions
 that scored worst, weighted toward whatever the current lesson teaches.
 
+### Turning a score into the next draft
+
+The report names what is wrong; `src/oratory/rework.ts` turns that into the
+next version. It splits strictly in two, and the line between the halves is the
+whole design:
+
+**The cuts, applied.** Only edits the machine can make from what the writer
+already said — hedges, filler, intensifiers, clichés and adverb padding removed,
+the capitalization behind each cut repaired, and any sentence nobody could say
+in one breath split at a coordinating conjunction (the one split that cannot
+strand a fragment). It shows the reworked text, the score it would now earn, and
+every cut struck through with its reason.
+
+**Only you can write these.** Anything that needs a fact becomes a question
+rather than an invention. Abstractions come back as "what actually happened,
+that you are calling this?", passive spans as "who did it?", and a long final
+sentence as a landing to cut to four words. The machine never replaces an
+abstraction with a specific it made up.
+
+**Anchors this draft is missing.** Each device the passage lacks becomes a
+fill-in-the-blank scaffold seeded from the writer's own material: a drumbeat
+built on an opening they already repeat, a turn, a three-part list, a direct
+address, and a short line to drop after their longest sentence. Seeds are the
+nouns the draft is about, found with two cheap signals standing in for a
+part-of-speech tagger — a word following a determiner, and a word carrying a
+noun suffix — because raw frequency returns "again", "anyone" and "basically",
+none of which can head a list. The three items are ordered by syllable count so
+the heaviest lands last. Filling an anchor previews the line, adds it to the
+draft, and reopens the editor to score again.
+
 ### What the speaking drills measure
 
 `src/oratory/delivery.ts` records through `getUserMedia`, samples loudness from
@@ -110,7 +140,7 @@ drill on its own.
 src/
   game/        conversation engine, scoring, LLM transport
   content/     the conversation encounters
-  oratory/     curriculum, text analyzer, delivery capture, coach prompts
+  oratory/     curriculum, text analyzer, delivery capture, rework engine, coach prompts
   components/  screens for both modes
   hooks/       progress and save state
 api/llm.ts     serverless Anthropic proxy
