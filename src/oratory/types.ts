@@ -142,3 +142,21 @@ export interface DrillAttempt {
   score: number;
   at: number;
 }
+
+/** One sentence of a draft, scored and ranked against the others. */
+export interface PhraseScore {
+  /** Position in the draft, from 0. */
+  index: number;
+  /** 1 is the strongest line in the passage. */
+  rank: number;
+  text: string;
+  score: number;
+  words: number;
+  /** What this line is doing right, in two or three words each. */
+  working: string[];
+  /** What is costing it. */
+  dragging: string[];
+  /** Its job in the rhythm of the passage. */
+  role: "build" | "drop" | "flat";
+  note: string;
+}

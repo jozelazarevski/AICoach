@@ -63,6 +63,21 @@ Every finding quotes the span of the passage that caused it. A weak draft can
 trip every rule at once, so findings are capped and ordered by the dimensions
 that scored worst, weighted toward whatever the current lesson teaches.
 
+### Which lines are already working
+
+`rankPhrases` scores every sentence against the others in the draft and ranks
+them, so a rewrite keeps what is working instead of starting over. Each line
+gets its score, its job in the rhythm (builds, lands, flat), tags for what is
+carrying it and what is costing it, and a one-line verdict.
+
+Passage-level scoring normalizes per hundred words, which is meaningless on a
+six-word sentence — one charged word would read as a rate of sixteen per
+hundred and take full marks. Ranking therefore counts occurrences directly and
+saturates, so a short line and a long one are judged on what they contain
+rather than on their density. Repetition devices credit every line in the run
+rather than only the last, and a short sentence counts as the drop only when
+the line before it is long enough to make it feel like one.
+
 ### Turning a score into the next draft
 
 The report names what is wrong; `src/oratory/rework.ts` turns that into the

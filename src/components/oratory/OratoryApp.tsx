@@ -17,6 +17,7 @@ import { WriteDrill } from "./WriteDrill";
 import { SpeakDrill } from "./SpeakDrill";
 import { ScoreReport, type CoachState, type ReportFinding, type ReportItem } from "./ScoreReport";
 import { ReworkPanel } from "./ReworkPanel";
+import { PhrasePanel } from "./PhrasePanel";
 import { playVerdict } from "../../game/sounds";
 
 interface OratoryAppProps {
@@ -258,6 +259,7 @@ export function OratoryApp({
   if (view === "report" && result) {
     return (
       <ScoreReport
+        phrases={result.text !== undefined ? <PhrasePanel text={result.text} /> : undefined}
         rework={
           result.text !== undefined ? (
             <ReworkPanel

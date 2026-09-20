@@ -25,6 +25,8 @@ export type CoachState =
   | { status: "failed"; reason: string };
 
 interface ScoreReportProps {
+  /** Per-sentence ranking, for written drills. */
+  phrases?: ReactNode;
   /** The rework panel, for written drills. Spoken attempts have no text to fix. */
   rework?: ReactNode;
   overall: number;
@@ -183,6 +185,7 @@ function CoachPanel({ coach }: { coach: CoachState }) {
 }
 
 export function ScoreReport({
+  phrases,
   rework,
   overall,
   headline,
@@ -241,6 +244,8 @@ export function ScoreReport({
           <FindingCard key={`${finding.label}-${i}`} finding={finding} />
         ))}
       </div>
+
+      {phrases && <div className="mt-4">{phrases}</div>}
 
       {rework && <div className="mt-4">{rework}</div>}
 

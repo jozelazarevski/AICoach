@@ -3,6 +3,7 @@ import type {
   Dimension,
   DimensionScore,
   Finding,
+  PhraseScore,
   TextStats,
 } from "./types";
 
@@ -496,6 +497,11 @@ function quoteOf(s: string, max = 90): string {
   return t.length > max ? `${t.slice(0, max - 1)}…` : t;
 }
 
+/** Matched in lowercase; restore the standalone "I" before showing it back. */
+function spoken(phrase: string): string {
+  return phrase.replace(/\bi\b/g, "I");
+}
+
 /** Phrase lists are matched in lowercase; show them the way they are spoken. */
 function quoteList(phrases: string[], limit = 3): string {
   return phrases
@@ -867,4 +873,220 @@ export function bandFor(score: number): { label: string; color: string } {
   if (score >= 55) return { label: "Workable", color: "var(--solid)" };
   if (score >= 40) return { label: "Flat", color: "var(--warn)" };
   return { label: "A report, not a speech", color: "var(--bad)" };
+}
+
+// ------------------------------------------------------- ranking the phrases
+
+// Passage-level scoring normalizes per hundred words, which is meaningless on
+// a six-word sentence: one charged word would read as a rate of sixteen per
+// hundred and score full marks. Ranking single lines therefore counts
+// occurrences directly and saturates, so a short line and a long one are
+// judged on what they contain rather than on their density.
+
+interface PhraseDevices {
+  drumbeat: boolean;
+  epistrophe: boolean;
+  tricolon: boolean;
+  turn: boolean;
+  question: boolean;
+  address: boolean;
+  image: boolean;
+}
+
+function devicesPerSentence(sentences: Sentence[]): PhraseDevices[] {
+  const tags: PhraseDevices[] = sentences.map((s) => ({
+    drumbeat: false,
+    epistrophe: false,
+    tricolon: /[^,]+,[^,]+,\s*(?:and|or)\s+[^,]+/i.test(s.text),
+    turn: /\bnot\b[^.!?]*\bbut\b/i.test(s.text),
+    question: s.text.trim().endsWith("?"),
+    address: /\b(?:you|your|yours)\b/i.test(s.text),
+    image: /\b(?:like a|like the|as if|as though)\b/i.test(s.text),
+  }));
+
+  // A repetition device belongs to every line in the run, not just the last.
+  const markRuns = (key: (s: Sentence) => string, field: "drumbeat" | "epistrophe") => {
+    let start = 0;
+    for (let i = 1; i <= sentences.length; i++) {
+      const same =
+        i < sentences.length && key(sentences[i]) !== "" && key(sentences[i]) === key(sentences[start]);
+      if (same) continue;
+      if (i - start >= 2) {
+        for (let j = start; j < i; j++) tags[j][field] = true;
+      }
+      start = i;
+    }
+  };
+
+  markRuns((s) => s.words.slice(0, 2).join(" "), "drumbeat");
+  markRuns((s) => s.words.slice(-2).join(" "), "epistrophe");
+
+  // A matched frame answering a negated one is a turn across two lines.
+  for (let i = 1; i < sentences.length; i++) {
+    const prev = sentences[i - 1];
+    const cur = sentences[i];
+    const sameOpening =
+      prev.words.slice(0, 2).join(" ") !== "" &&
+      prev.words.slice(0, 2).join(" ") === cur.words.slice(0, 2).join(" ");
+    const negatedFrame = prev.words
+      .slice(0, 4)
+      .some((w) => w === "not" || w === "never" || w === "no");
+    if (sameOpening && negatedFrame) {
+      tags[i - 1].turn = true;
+      tags[i].turn = true;
+    }
+  }
+
+  return tags;
+}
+
+function roleOf(sentences: Sentence[], index: number): "build" | "drop" | "flat" {
+  const words = sentences[index].words.length;
+  const previous = index > 0 ? sentences[index - 1].words.length : 0;
+  if (words <= 6 && previous >= 12) return "drop";
+  if (words >= 15) return "build";
+  return "flat";
+}
+
+export function rankPhrases(text: string): PhraseScore[] {
+  const sentences = splitSentences(text);
+  if (sentences.length === 0) return [];
+
+  const deviceTags = devicesPerSentence(sentences);
+
+  const scored = sentences.map((sentence, index) => {
+    const lower = sentence.text.toLowerCase();
+    const working: string[] = [];
+    const dragging: string[] = [];
+
+    // --- what it is made of
+    const concreteHits = sentence.words.filter((w) => CONCRETE_WORDS.has(w));
+    const properNouns = (sentence.text.match(/(?<!^)(?<!["“])\b[A-Z][a-z]{2,}\b/g) ?? []).length;
+    const numbers = (sentence.text.match(/\b\d[\d,.]*\b/g) ?? []).length;
+    const specifics = concreteHits.length + Math.min(properNouns, 2) + numbers;
+    const abstractHits = sentence.words.filter(
+      (w) => ABSTRACT_WORDS.has(w) || (ABSTRACT_SUFFIX.test(w) && !ABSTRACT_EXCEPTIONS.has(w))
+    );
+    const concrete = clamp(45 + 18 * Math.min(specifics, 3) - 20 * Math.min(abstractHits.length, 3));
+
+    const chargedHits = sentence.words.filter((w) => CHARGED_WORDS.has(w));
+    const toldHits = sentence.words.filter((w) => TOLD_EMOTION.has(w));
+    const charge = clamp(40 + 20 * Math.min(chargedHits.length, 3) - 18 * Math.min(toldHits.length, 2));
+
+    const hedges = countPhrases(lower, HEDGES);
+    const filler = countPhrases(lower, FILLER);
+    const intensifiers = countPhrases(lower, INTENSIFIERS);
+    const cliches = countPhrases(lower, CLICHES);
+    const adverbs = sentence.words.filter(
+      (w) => w.endsWith("ly") && w.length > 4 && !LY_EXCEPTIONS.has(w)
+    );
+    const passive = (sentence.text.match(PASSIVE) ?? []).length;
+
+    // "honestly" is filler and an adverb both; report it once.
+    const alreadyNamed = new Set(
+      [...hedges.hits, ...filler.hits, ...intensifiers.hits, ...cliches.hits].flatMap((phrase) =>
+        phrase.split(/\s+/)
+      )
+    );
+    const unflaggedAdverbs = adverbs.filter((w) => !alreadyNamed.has(w));
+    const economy = clamp(
+      100 -
+        22 * hedges.total -
+        18 * filler.total -
+        12 * intensifiers.total -
+        25 * cliches.total -
+        10 * adverbs.length -
+        14 * passive
+    );
+
+    const breath = clamp(
+      100 - Math.max(0, sentence.longestRun - 16) * 6 - (sentence.words.length > 28 ? 20 : 0)
+    );
+
+    // --- what it does
+    const tags = deviceTags[index];
+    let deviceBonus = 0;
+    if (tags.drumbeat) deviceBonus += 15;
+    if (tags.turn) deviceBonus += 15;
+    if (tags.tricolon) deviceBonus += 12;
+    if (tags.epistrophe) deviceBonus += 10;
+    if (tags.image) deviceBonus += 8;
+    if (tags.question) deviceBonus += 5;
+    if (tags.address) deviceBonus += 5;
+    deviceBonus = Math.min(deviceBonus, 28);
+
+    const role = roleOf(sentences, index);
+    const roleBonus =
+      role === "drop" ? 15 : role === "build" && sentence.longestRun <= 16 ? 5 : 0;
+
+    const base = (concrete + charge + economy * 1.2 + breath * 0.8) / 4;
+    const score = clamp(Math.round(base + deviceBonus + roleBonus));
+
+    // --- the labels
+    if (specifics > 0) working.push(`${specifics} specific${specifics === 1 ? "" : "s"}`);
+    if (chargedHits.length > 0) working.push("words with weight");
+    if (tags.drumbeat) working.push("drumbeat");
+    if (tags.turn) working.push("a turn");
+    if (tags.tricolon) working.push("three-part list");
+    if (tags.epistrophe) working.push("epistrophe");
+    if (tags.image) working.push("an image");
+    if (tags.question) working.push("a question");
+    if (tags.address) working.push("speaks to them");
+    if (role === "drop") working.push("the drop");
+    if (economy === 100 && sentence.words.length > 3) working.push("nothing padded");
+
+    if (abstractHits.length > 0) dragging.push(`abstraction: ${abstractHits.slice(0, 2).join(", ")}`);
+    if (hedges.total > 0) dragging.push(`hedge: ${spoken(hedges.hits[0])}`);
+    if (filler.total > 0) dragging.push(`filler: ${spoken(filler.hits[0])}`);
+    if (cliches.total > 0) dragging.push(`cliché: ${spoken(cliches.hits[0])}`);
+    if (intensifiers.total > 0) dragging.push(`intensifier: ${spoken(intensifiers.hits[0])}`);
+    if (unflaggedAdverbs.length > 0) dragging.push(`adverb: ${unflaggedAdverbs[0]}`);
+    if (passive > 0) dragging.push("passive voice");
+    if (toldHits.length > 0) dragging.push(`announced: ${toldHits[0]}`);
+    if (sentence.longestRun > 18) dragging.push(`${sentence.longestRun} words with no air`);
+
+    return {
+      index,
+      rank: 0,
+      text: sentence.text,
+      score,
+      words: sentence.words.length,
+      working,
+      dragging,
+      role,
+      note: phraseNote(score, working, dragging, role, sentence.words.length),
+    } satisfies PhraseScore;
+  });
+
+  const order = [...scored].sort((a, b) => b.score - a.score || a.index - b.index);
+  order.forEach((phrase, i) => {
+    phrase.rank = i + 1;
+  });
+
+  return scored;
+}
+
+function phraseNote(
+  score: number,
+  working: string[],
+  dragging: string[],
+  role: "build" | "drop" | "flat",
+  words: number
+): string {
+  if (score >= 80 && working.length > 0) {
+    return `Keep this one. ${working[0][0].toUpperCase()}${working[0].slice(1)} is carrying it.`;
+  }
+  if (dragging.length > 0) {
+    return `Fix the ${dragging[0]} and this line comes up with the rest.`;
+  }
+  if (role === "build" && words >= 20) {
+    return "Long, and doing nothing but carrying information. Follow it with something short.";
+  }
+  if (words <= 6) {
+    return "Short enough to land, but the line before it is too short to make it feel like one. Put it after your longest sentence.";
+  }
+  if (role === "flat") {
+    return "Neither building nor landing. This is the length that disappears in a room.";
+  }
+  return "Nothing wrong with it, and nothing in it the room will remember.";
 }
