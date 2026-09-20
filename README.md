@@ -1,1 +1,120 @@
 # AICoach
+
+Two trainers for talking under pressure, in one app.
+
+**Closed Door** — conversation practice. Someone across the table wants
+something and so do you: a landlord, a car salesman, your boss, your brother.
+Pick what you say next or type your own words, and try to fill Progress before
+Respect runs out.
+
+**The Oratory Class** — speaking to a room rather than across a table. Ten
+lessons on emotional speech, with drills that score what you write and listen
+to how you say it out loud.
+
+Both run entirely in the browser. An Anthropic API key is optional and adds a
+live opponent to the conversations and a coach's read to the oratory drills;
+without one, everything still works offline.
+
+## Running it
+
+```
+npm install
+npm run dev      # http://localhost:5173
+npm test         # vitest
+npm run build    # typecheck + production build
+```
+
+## The Oratory Class
+
+### The curriculum
+
+Ten lessons in three units, in `src/oratory/curriculum.ts`:
+
+| Unit | Lessons |
+| --- | --- |
+| Substance | The Camera Not the Caption · One Image Beats Five Adjectives · Say What It Cost You |
+| Shape | Long Long Short · The Drumbeat · Three and the Heaviest Last · The Turn |
+| Delivery | Silence Is a Word · Volume Is Punctuation · The Last Line |
+
+Each lesson carries the teaching, a flat/charged example pair, four concrete
+moves, and one to two drills. Sixteen drills in total, in three kinds: `write`
+(compose from a brief), `rewrite` (fix a supplied flat passage), and `speak`
+(deliver it out loud into the microphone).
+
+### What the writing drills measure
+
+`src/oratory/analyze.ts` scores a passage on six dimensions, each 0-100, with
+the drill's target dimensions weighted more heavily in the total:
+
+- **Concreteness** — abstraction suffixes and stock corporate nouns against
+  concrete nouns, numbers and names.
+- **Rhythm** — standard deviation of sentence length, whether there is a short
+  sentence to land on, and whether it sits against a long one.
+- **Devices** — anaphora, epistrophe, three-part lists, antithesis, rhetorical
+  questions, imagery, direct address.
+- **Emotional charge** — words with temperature, minus emotion that is
+  announced ("devastating", "incredibly proud") rather than shown.
+- **Economy** — hedges, filler, intensifiers, `-ly` padding, clichés, passive
+  voice.
+- **Breath** — longest run of words with no punctuation to breathe on, and
+  whether any sentence is unspeakable in one lungful.
+
+Every finding quotes the span of the passage that caused it. A weak draft can
+trip every rule at once, so findings are capped and ordered by the dimensions
+that scored worst, weighted toward whatever the current lesson teaches.
+
+### What the speaking drills measure
+
+`src/oratory/delivery.ts` records through `getUserMedia`, samples loudness from
+an `AnalyserNode` at 20 Hz, and splits those samples into room and voice with
+Otsu's method — a percentile cannot do it, because how much of a recording is
+silence is exactly what varies between a measured delivery and someone talking
+without breathing. From that it derives:
+
+- **Pace** — words a minute, against a 105-145 band.
+- **Pauses** — every silence over 0.35s, how many were held past a second, and
+  the longest.
+- **Range** — dB between the loud and quiet parts of your speech. Under about
+  5 dB is a monotone whatever the words are doing.
+- **Filler** — um, uh, you know, basically, per minute.
+
+Where the browser has one, `SpeechRecognition` supplies the transcript for the
+word count and filler counting. Firefox has no recognizer, so pace falls back
+to the script's length (and is scored gently, since that number assumes you
+read the whole thing) and filler is not counted. Pauses and range come from the
+audio and work everywhere.
+
+Nothing is uploaded: audio is analyzed in the page and discarded when the
+recording stops.
+
+## The optional coach
+
+With `apiEnabled` on in Settings and a key available, each drill also gets a
+qualitative read from Claude — what lands, what costs you, and a rewrite of the
+weak part in your own words and facts. The analyzer produces the score and the
+model never does, so the student is never handed two numbers that disagree.
+
+The key can come from either end:
+
+- **Server** — set `ANTHROPIC_API_KEY` in the deployment environment. The
+  `/api/llm` function proxies calls and the key never reaches the browser.
+- **Browser** — paste a key into Settings. It is kept in `localStorage` on that
+  device and sent only to Anthropic.
+
+With neither, the coach panel stays closed and the offline analysis carries the
+drill on its own.
+
+## Layout
+
+```
+src/
+  game/        conversation engine, scoring, LLM transport
+  content/     the conversation encounters
+  oratory/     curriculum, text analyzer, delivery capture, coach prompts
+  components/  screens for both modes
+  hooks/       progress and save state
+api/llm.ts     serverless Anthropic proxy
+```
+
+Progress for both modes shares one XP pool and rank ladder, saved to
+`localStorage` under `closed-door-progress`.

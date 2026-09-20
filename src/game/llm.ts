@@ -57,11 +57,16 @@ function persona(encounter: Encounter): string {
   ].join("\n");
 }
 
-async function callLlm(system: string, user: string): Promise<string> {
+export async function callLlm(
+  system: string,
+  user: string,
+  maxTokens: number = MAX_TOKENS
+): Promise<string> {
   if (!clientKey && unavailable) throw new Error("llm unavailable");
 
   const controller = new AbortController();
-  const timer = setTimeout(() => controller.abort(), 12000);
+  // Longer answers need a longer leash; a game turn should still give up fast.
+  const timer = setTimeout(() => controller.abort(), maxTokens > MAX_TOKENS ? 25000 : 12000);
 
   let resp: Response;
   try {
@@ -77,7 +82,7 @@ async function callLlm(system: string, user: string): Promise<string> {
         },
         body: JSON.stringify({
           model: MODEL,
-          max_tokens: MAX_TOKENS,
+          max_tokens: maxTokens,
           system,
           messages: [{ role: "user", content: user }],
         }),
@@ -87,7 +92,11 @@ async function callLlm(system: string, user: string): Promise<string> {
       resp = await fetch("/api/llm", {
         method: "POST",
         headers: { "content-type": "application/json" },
-        body: JSON.stringify({ system, messages: [{ role: "user", content: user }] }),
+        body: JSON.stringify({
+          system,
+          messages: [{ role: "user", content: user }],
+          max_tokens: maxTokens,
+        }),
         signal: controller.signal,
       });
     }
@@ -112,7 +121,7 @@ async function callLlm(system: string, user: string): Promise<string> {
   return text;
 }
 
-function extractJson(text: string): any {
+export function extractJson(text: string): any {
   const jsonStart = text.indexOf("{");
   const jsonEnd = text.lastIndexOf("}");
   if (jsonStart === -1 || jsonEnd <= jsonStart) throw new Error("llm bad output");

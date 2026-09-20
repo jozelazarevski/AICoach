@@ -1,4 +1,4 @@
-import { useCallback, useState } from "react";
+import { useCallback, useRef, useState } from "react";
 import { GRADE_LADDER } from "../game/engine";
 
 export type Theme = "dark" | "light" | "sepia" | "mist";
@@ -17,12 +17,21 @@ export interface CompletedRecord {
   playCount: number;
 }
 
+export interface DrillRecord {
+  bestScore: number;
+  lastScore: number;
+  attempts: number;
+}
+
 export interface Progress {
   lifetimeXp: number;
   completed: Record<string, CompletedRecord>;
   settings: { apiEnabled: boolean; introSeen: boolean; theme: Theme; apiKey: string };
   weaknesses: Record<string, number>; // archetype name → loss/partial count
   dailyChallengeDate: string; // ISO date string of last daily completion
+  drills: Record<string, DrillRecord>; // oratory drill id → best/last/attempts
+  /** Last written draft per drill, so a passage survives a reload. */
+  drafts: Record<string, string>;
 }
 
 const STORAGE_KEY = "closed-door-progress";
@@ -33,7 +42,17 @@ const DEFAULT_PROGRESS: Progress = {
   settings: { apiEnabled: false, introSeen: false, theme: "light", apiKey: "" },
   weaknesses: {},
   dailyChallengeDate: "",
+  drills: {},
+  drafts: {},
 };
+
+/** XP for a drill attempt: only improvement on your own best is worth much. */
+export function drillXp(score: number, previousBest: number | undefined): number {
+  const base = Math.round(score / 12); // 0-8 for the attempt itself
+  const improvement =
+    previousBest === undefined ? 6 : Math.max(0, Math.round((score - previousBest) / 6));
+  return base + improvement;
+}
 
 function gradeRank(grade: string): number {
   const idx = GRADE_LADDER.indexOf(grade);
@@ -60,6 +79,8 @@ function loadProgress(): Progress {
       },
       weaknesses: parsed.weaknesses ?? {},
       dailyChallengeDate: parsed.dailyChallengeDate ?? "",
+      drills: parsed.drills ?? {},
+      drafts: parsed.drafts ?? {},
     };
   } catch {
     return { ...DEFAULT_PROGRESS };
@@ -77,6 +98,8 @@ function save(progress: Progress) {
 
 export function useProgress() {
   const [progress, setProgress] = useState<Progress>(() => loadProgress());
+  const latest = useRef(progress);
+  latest.current = progress;
 
   const updateProgress = useCallback(
     (
@@ -138,6 +161,43 @@ export function useProgress() {
     []
   );
 
+  /** Records an oratory drill attempt and returns the XP it earned. */
+  const recordDrill = useCallback((drillId: string, score: number): number => {
+    // Read through a ref so the XP can be returned to the caller now, rather
+    // than whenever React gets around to running the updater.
+    const gained = drillXp(score, latest.current.drills[drillId]?.bestScore);
+    setProgress((prev) => {
+      const prior = prev.drills[drillId];
+      const next: Progress = {
+        ...prev,
+        lifetimeXp: prev.lifetimeXp + gained,
+        drills: {
+          ...prev.drills,
+          [drillId]: {
+            bestScore: Math.max(prior?.bestScore ?? 0, score),
+            lastScore: score,
+            attempts: (prior?.attempts ?? 0) + 1,
+          },
+        },
+      };
+      save(next);
+      return next;
+    });
+    return gained;
+  }, []);
+
+  const saveDraft = useCallback((drillId: string, text: string) => {
+    setProgress((prev) => {
+      if (prev.drafts[drillId] === text) return prev;
+      const next: Progress = {
+        ...prev,
+        drafts: { ...prev.drafts, [drillId]: text },
+      };
+      save(next);
+      return next;
+    });
+  }, []);
+
   const setApiEnabled = useCallback((apiEnabled: boolean) => {
     setProgress((prev) => {
       const next: Progress = {
@@ -194,5 +254,15 @@ export function useProgress() {
     setProgress(next);
   }, []);
 
-  return { progress, updateProgress, setApiEnabled, setApiKey, setTheme, dismissIntro, resetProgress };
+  return {
+    progress,
+    updateProgress,
+    recordDrill,
+    saveDraft,
+    setApiEnabled,
+    setApiKey,
+    setTheme,
+    dismissIntro,
+    resetProgress,
+  };
 }

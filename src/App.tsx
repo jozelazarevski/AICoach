@@ -14,6 +14,7 @@ import { StartScreen } from "./components/StartScreen";
 import { PlayScreen } from "./components/PlayScreen";
 import { SceneEndScreen } from "./components/SceneEndScreen";
 import { RankUpBanner } from "./components/RankUpBanner";
+import { OratoryApp } from "./components/oratory/OratoryApp";
 
 const ACCENT: Record<Difficulty, string> = {
   measured: "#4F8FB5",
@@ -22,6 +23,7 @@ const ACCENT: Record<Difficulty, string> = {
 };
 
 type Screen = "start" | "play" | "end";
+type Mode = "conversation" | "oratory";
 
 interface EndInfo {
   ending: Ending;
@@ -44,8 +46,17 @@ function dailyEncounterId(encounters: Encounter[]): string {
 }
 
 export default function App() {
-  const { progress, updateProgress, setApiEnabled, setApiKey, setTheme, dismissIntro } =
-    useProgress();
+  const {
+    progress,
+    updateProgress,
+    recordDrill,
+    saveDraft,
+    setApiEnabled,
+    setApiKey,
+    setTheme,
+    dismissIntro,
+  } = useProgress();
+  const [mode, setMode] = useState<Mode>("conversation");
   const [screen, setScreen] = useState<Screen>("start");
   const [encounter, setEncounter] = useState<Encounter | null>(null);
   const [state, setState] = useState<GameState | null>(null);
@@ -127,6 +138,14 @@ export default function App() {
     }
   };
 
+  const handleDrillScore = (drillId: string, score: number): number => {
+    const beforeRank = rankFor(progress.lifetimeXp);
+    const gained = recordDrill(drillId, score);
+    const afterRank = rankFor(progress.lifetimeXp + gained);
+    if (afterRank !== beforeRank) setRankUp(afterRank);
+    return gained;
+  };
+
   const playAgain = () => {
     if (encounter) start(encounter);
   };
@@ -144,7 +163,16 @@ export default function App() {
         <RankUpBanner rankName={rankUp} onDismiss={() => setRankUp(null)} />
       )}
 
-      {screen === "start" && (
+      {mode === "oratory" && (
+        <OratoryApp
+          progress={progress}
+          onRecordDrill={handleDrillScore}
+          onSaveDraft={saveDraft}
+          onExit={() => setMode("conversation")}
+        />
+      )}
+
+      {mode === "conversation" && screen === "start" && (
         <StartScreen
           encounters={ENCOUNTERS}
           progress={progress}
@@ -154,10 +182,11 @@ export default function App() {
           onSetTheme={setTheme}
           onSetApiEnabled={setApiEnabled}
           onSetApiKey={setApiKey}
+          onOpenOratory={() => setMode("oratory")}
         />
       )}
 
-      {screen === "play" && encounter && state && (
+      {mode === "conversation" && screen === "play" && encounter && state && (
         <PlayScreen
           encounter={encounter}
           state={state}
@@ -167,7 +196,7 @@ export default function App() {
         />
       )}
 
-      {screen === "end" && endInfo && encounter && (
+      {mode === "conversation" && screen === "end" && endInfo && encounter && (
         <SceneEndScreen
           ending={endInfo.ending}
           grade={endInfo.grade}

@@ -2,7 +2,10 @@
 // The ANTHROPIC_API_KEY env var stays server-side and is never sent to the client.
 
 const MODEL = "claude-sonnet-5";
-const MAX_TOKENS = 500;
+const DEFAULT_MAX_TOKENS = 500;
+// Oratory coaching returns a rewrite as well as notes, so it asks for more
+// than a dialogue turn. The cap keeps a crafted request from running up a bill.
+const HARD_MAX_TOKENS = 1500;
 
 export default async function handler(req: any, res: any) {
   if (req.method !== "POST") {
@@ -16,7 +19,7 @@ export default async function handler(req: any, res: any) {
     return;
   }
 
-  const { system, messages } = req.body ?? {};
+  const { system, messages, max_tokens: requestedTokens } = req.body ?? {};
   if (typeof system !== "string" || !Array.isArray(messages) || messages.length === 0 || messages.length > 24) {
     res.status(400).json({ error: "Bad request" });
     return;
@@ -33,6 +36,11 @@ export default async function handler(req: any, res: any) {
     }
   }
 
+  const maxTokens =
+    typeof requestedTokens === "number" && Number.isFinite(requestedTokens)
+      ? Math.max(1, Math.min(HARD_MAX_TOKENS, Math.round(requestedTokens)))
+      : DEFAULT_MAX_TOKENS;
+
   try {
     const upstream = await fetch("https://api.anthropic.com/v1/messages", {
       method: "POST",
@@ -43,7 +51,7 @@ export default async function handler(req: any, res: any) {
       },
       body: JSON.stringify({
         model: MODEL,
-        max_tokens: MAX_TOKENS,
+        max_tokens: maxTokens,
         system,
         messages,
       }),

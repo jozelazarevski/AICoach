@@ -13,6 +13,7 @@ interface StartScreenProps {
   onSetTheme: (theme: Theme) => void;
   onSetApiEnabled: (enabled: boolean) => void;
   onSetApiKey: (key: string) => void;
+  onOpenOratory: () => void;
 }
 
 const DIFFICULTY_COLOR: Record<Difficulty, string> = {
@@ -120,6 +121,7 @@ export function StartScreen({
   onSetTheme,
   onSetApiEnabled,
   onSetApiKey,
+  onOpenOratory,
 }: StartScreenProps) {
   const [filter, setFilter] = useState<SettingFilter>("all");
   const [settingsOpen, setSettingsOpen] = useState(false);
@@ -265,6 +267,37 @@ export function StartScreen({
         {!progress.settings.introSeen && <HowToPlay onDismiss={onDismissIntro} />}
 
         <Hud lifetimeXp={progress.lifetimeXp} />
+
+        <button
+          type="button"
+          onClick={onOpenOratory}
+          className="flex flex-col rounded-lg border bg-ink-2 p-5 text-left transition-colors hover:border-paper-faint"
+          style={{ borderColor: "color-mix(in srgb, var(--accent) 40%, var(--line))" }}
+        >
+          <div className="flex flex-wrap items-center justify-between gap-2">
+            <span
+              className="rounded-full px-2 py-0.5 font-mono text-[10px] uppercase tracking-wide"
+              style={{
+                color: "var(--accent)",
+                border: "1px solid var(--accent)",
+                background: "color-mix(in srgb, var(--accent) 10%, transparent)",
+              }}
+            >
+              The Oratory Class
+            </span>
+            <span className="font-mono text-[11px] text-paper-faint">
+              {Object.keys(progress.drills).length} drills attempted
+            </span>
+          </div>
+          <h2 className="mt-2 font-display text-xl text-paper">
+            Speaking to a room, not across a table
+          </h2>
+          <p className="mt-1 font-body text-sm leading-relaxed text-paper-dim">
+            Ten lessons on emotional speech — concreteness, rhythm, repetition,
+            the pause — with drills that score what you write and listen to how
+            you say it.
+          </p>
+        </button>
 
         {weakness && (
           <div className="flex items-center gap-3 rounded-lg border border-line bg-ink-2 px-4 py-2.5">
