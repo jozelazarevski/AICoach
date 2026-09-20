@@ -33,6 +33,8 @@ interface Result {
   lesson: Lesson;
   /** The draft that was scored — absent for spoken attempts. */
   text?: string;
+  /** Identifies the attempt, so a new one never reuses the last one's panel state. */
+  key: number;
   overall: number;
   items: ReportItem[];
   findings: ReportFinding[];
@@ -106,7 +108,8 @@ export function OratoryApp({
     overall: number,
     parts: { items: ReportItem[]; findings: ReportFinding[] },
     headline: string,
-    text?: string
+    text: string | undefined,
+    key: number
   ) => {
     const previousBest = progress.drills[theDrill.id]?.bestScore;
     const xpGained = onRecordDrill(theDrill.id, overall);
@@ -115,6 +118,7 @@ export function OratoryApp({
       drill: theDrill,
       lesson: theLesson,
       text,
+      key,
       overall,
       items: parts.items,
       findings: parts.findings,
@@ -141,9 +145,9 @@ export function OratoryApp({
 
   const handleWritten = (text: string) => {
     if (!drill || !lesson) return;
-    const analysis = analyze(text, drill.targets);
     const id = ++attemptId.current;
-    finishAttempt(lesson, drill, analysis.overall, writtenResult(analysis), "Your draft", text);
+    const analysis = analyze(text, drill.targets);
+    finishAttempt(lesson, drill, analysis.overall, writtenResult(analysis), "Your draft", text, id);
 
     askCoach(async () => {
       const coaching = await coachPassage(lesson, drill, text, analysis);
@@ -153,9 +157,9 @@ export function OratoryApp({
 
   const handleSpoken = (capture: DeliveryCapture) => {
     if (!drill || !lesson) return;
-    const report = analyzeDelivery(capture);
     const id = ++attemptId.current;
-    finishAttempt(lesson, drill, report.overall, spokenResult(report), "Your delivery");
+    const report = analyzeDelivery(capture);
+    finishAttempt(lesson, drill, report.overall, spokenResult(report), "Your delivery", undefined, id);
 
     if (report.metrics.silent) {
       setCoach({ status: "off" });
@@ -257,6 +261,7 @@ export function OratoryApp({
         rework={
           result.text !== undefined ? (
             <ReworkPanel
+              key={result.key}
               text={result.text}
               targets={result.drill.targets}
               onUseDraft={(next, openEditor) =>
