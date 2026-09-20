@@ -14,10 +14,10 @@ import type {
 
 // Abstraction: the suffixes that turn an event into a category, plus the
 // stock nouns that corporate speech reaches for instead of saying a thing.
-const ABSTRACT_SUFFIX = /(tion|sion|ment|ity|ness|ance|ence|ism|ship)s?$/;
+export const ABSTRACT_SUFFIX = /(tion|sion|ment|ity|ness|ance|ence|ism|ship)s?$/;
 
 // Words the suffix rule catches that are perfectly concrete.
-const ABSTRACT_EXCEPTIONS = new Set([
+export const ABSTRACT_EXCEPTIONS = new Set([
   "moment",
   "comment",
   "cement",
@@ -38,7 +38,7 @@ const ABSTRACT_EXCEPTIONS = new Set([
   "quietness",
 ]);
 
-const ABSTRACT_WORDS = new Set([
+export const ABSTRACT_WORDS = new Set([
   "impact",
   "synergy",
   "leverage",
@@ -86,7 +86,7 @@ const ABSTRACT_WORDS = new Set([
 
 // Concreteness: things with edges. Bodies, rooms, objects, weather, time you
 // can point at. Short on purpose — proper nouns and numbers do a lot of work.
-const CONCRETE_WORDS = new Set([
+export const CONCRETE_WORDS = new Set([
   "hand", "hands", "face", "eyes", "eye", "voice", "back", "shoulder", "shoulders",
   "knee", "knees", "throat", "chest", "mouth", "breath", "skin", "hair", "feet",
   "desk", "chair", "table", "door", "doors", "window", "floor", "wall", "room",
@@ -127,7 +127,7 @@ const TOLD_EMOTION = new Set([
   "challenging", "difficult", "exciting", "wonderful", "terrible", "awful",
 ]);
 
-const HEDGES = [
+export const HEDGES = [
   "i think", "i feel like", "i guess", "i believe", "in my opinion",
   "sort of", "kind of", "a bit", "a little bit", "somewhat", "perhaps",
   "maybe", "possibly", "probably", "arguably", "relatively", "fairly",
@@ -135,18 +135,18 @@ const HEDGES = [
   "i would say", "i just want to say", "if that makes sense",
 ];
 
-const FILLER = [
+export const FILLER = [
   "um", "uh", "er", "you know", "like i said", "basically", "actually",
   "literally", "obviously", "honestly", "essentially", "at the end of the day",
   "going forward", "in terms of", "as it were", "if you will", "right?",
 ];
 
-const INTENSIFIERS = [
+export const INTENSIFIERS = [
   "very", "really", "extremely", "truly", "quite", "so much", "totally",
   "absolutely", "completely", "definitely", "certainly", "super",
 ];
 
-const CLICHES = [
+export const CLICHES = [
   "at the end of the day",
   "think outside the box",
   "move the needle",
@@ -173,7 +173,7 @@ const CLICHES = [
   "in these unprecedented times",
 ];
 
-const LY_EXCEPTIONS = new Set([
+export const LY_EXCEPTIONS = new Set([
   "only", "family", "reply", "supply", "apply", "early", "ally", "rally",
   "silly", "holy", "july", "italy", "belly", "jelly", "ugly", "likely",
   "daily", "weekly", "monthly", "yearly", "assembly", "anomaly",

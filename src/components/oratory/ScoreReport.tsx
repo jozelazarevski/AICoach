@@ -1,3 +1,4 @@
+import type { ReactNode } from "react";
 import { bandFor } from "../../oratory/analyze";
 import type { Coaching } from "../../oratory/coach";
 import { useSpring } from "../../hooks/useSpring";
@@ -24,6 +25,8 @@ export type CoachState =
   | { status: "failed"; reason: string };
 
 interface ScoreReportProps {
+  /** The rework panel, for written drills. Spoken attempts have no text to fix. */
+  rework?: ReactNode;
   overall: number;
   headline: string;
   items: ReportItem[];
@@ -180,6 +183,7 @@ function CoachPanel({ coach }: { coach: CoachState }) {
 }
 
 export function ScoreReport({
+  rework,
   overall,
   headline,
   items,
@@ -237,6 +241,8 @@ export function ScoreReport({
           <FindingCard key={`${finding.label}-${i}`} finding={finding} />
         ))}
       </div>
+
+      {rework && <div className="mt-4">{rework}</div>}
 
       <div className="mt-4 flex flex-col gap-3">
         <CoachPanel coach={coach} />

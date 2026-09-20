@@ -16,6 +16,7 @@ import { LessonView } from "./LessonView";
 import { WriteDrill } from "./WriteDrill";
 import { SpeakDrill } from "./SpeakDrill";
 import { ScoreReport, type CoachState, type ReportFinding, type ReportItem } from "./ScoreReport";
+import { ReworkPanel } from "./ReworkPanel";
 import { playVerdict } from "../../game/sounds";
 
 interface OratoryAppProps {
@@ -30,6 +31,8 @@ type View = "home" | "lesson" | "drill" | "report";
 interface Result {
   drill: Drill;
   lesson: Lesson;
+  /** The draft that was scored — absent for spoken attempts. */
+  text?: string;
   overall: number;
   items: ReportItem[];
   findings: ReportFinding[];
@@ -102,7 +105,8 @@ export function OratoryApp({
     theDrill: Drill,
     overall: number,
     parts: { items: ReportItem[]; findings: ReportFinding[] },
-    headline: string
+    headline: string,
+    text?: string
   ) => {
     const previousBest = progress.drills[theDrill.id]?.bestScore;
     const xpGained = onRecordDrill(theDrill.id, overall);
@@ -110,6 +114,7 @@ export function OratoryApp({
     setResult({
       drill: theDrill,
       lesson: theLesson,
+      text,
       overall,
       items: parts.items,
       findings: parts.findings,
@@ -138,7 +143,7 @@ export function OratoryApp({
     if (!drill || !lesson) return;
     const analysis = analyze(text, drill.targets);
     const id = ++attemptId.current;
-    finishAttempt(lesson, drill, analysis.overall, writtenResult(analysis), "Your draft");
+    finishAttempt(lesson, drill, analysis.overall, writtenResult(analysis), "Your draft", text);
 
     askCoach(async () => {
       const coaching = await coachPassage(lesson, drill, text, analysis);
@@ -160,6 +165,15 @@ export function OratoryApp({
       const coaching = await coachDelivery(lesson, drill, capture.transcript, report.metrics);
       if (attemptId.current === id) setCoach({ status: "ready", coaching });
     });
+  };
+
+  const useReworkedDraft = (theDrill: Drill, next: string, openEditor: boolean) => {
+    onSaveDraft(theDrill.id, next);
+    if (!openEditor) return;
+    attemptId.current++;
+    setCoach({ status: "off" });
+    setDrill(theDrill);
+    setView("drill");
   };
 
   const openDrill = (d: Drill) => {
@@ -240,6 +254,17 @@ export function OratoryApp({
   if (view === "report" && result) {
     return (
       <ScoreReport
+        rework={
+          result.text !== undefined ? (
+            <ReworkPanel
+              text={result.text}
+              targets={result.drill.targets}
+              onUseDraft={(next, openEditor) =>
+                useReworkedDraft(result.drill, next, openEditor)
+              }
+            />
+          ) : undefined
+        }
         overall={result.overall}
         headline={`${result.lesson.title} · ${result.headline}`}
         items={result.items}
